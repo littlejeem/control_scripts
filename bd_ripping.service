@@ -1,0 +1,9 @@
+[Unit]
+Description=Auto Blu-Ray ripper
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/bd_ripping.sh
+
+[Install]
+WantedBy=multi-user.target
