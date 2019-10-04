@@ -1,0 +1,9 @@
+[Unit]
+Description=Auto DVD ripper
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/dvd_ripping.sh
+
+[Install]
+WantedBy=multi-user.target
