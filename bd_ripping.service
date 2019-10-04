@@ -1,3 +1,6 @@
+# A systemd service to trigger ripping of blu rays, this script is called by a udev rule
+# this script should be stored in /etc/sytemd/system with permissions 444
+
 [Unit]
 Description=Auto Blu-Ray ripper
 
