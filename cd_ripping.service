@@ -1,0 +1,9 @@
+[Unit]
+Description=Auto CD ripper
+
+[Service]
+Type=oneshot
+ExecStart=/home/jlivin25/bin/myscripts/controlscripts/CDRipping.sh
+
+[Install]
+WantedBy=multi-user.target
