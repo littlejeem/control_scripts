@@ -1,3 +1,5 @@
+# A udev rule to trigger ripping of dvd's, this script calls a service
+# this script should be stored in /etc/udev/rules.d/ with permissions 644
 # ID_CDROM_MEDIA_BD = Bluray
 # ID_CDROM_MEDIA_DVD = DVD
 # ID_CDROM_MEDIA_CD = CD
