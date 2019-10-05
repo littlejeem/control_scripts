@@ -10,6 +10,11 @@ clone the repository
 git clone https://github.com/littlejeem/control_scripts.git
 ```
 
+if using CD ripping services you will also need my other repository
+```bash
+git clone https://github.com/littlejeem/abcde_configs.git
+```
+
 move into the directory
 ```bash
 cd /home/USER/temp
