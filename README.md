@@ -7,7 +7,7 @@ To use navigate to a folder of your choice eg. ```/home/USER/temp``` or ```/home
 
 clone the repository
 ```bash
-git glone https://github.com/littlejeem/control_scripts.git
+git clone https://github.com/littlejeem/control_scripts.git
 ```
 
 move into the directory
