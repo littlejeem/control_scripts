@@ -2,10 +2,10 @@
 #
 UDEV_LOC="/etc/udev/rules.d/"
 SYSD_LOC="/etc/systemd/system/"
-if [ whoami != root ];
-  then echo "Please run as root"
+if [[ $EUID -ne 0 ]]; then
+   echo "This script must be run as root"
    exit 1
-  else
+else
    cd "$(dirname "$0")"
    chmod 644 *.rules
    cp *.rules $UDEV_LOC
