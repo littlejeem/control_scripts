@@ -1,7 +1,9 @@
 # control_scripts
-A collection of scripts that control functions, primarily on my media pc
+A collection of scripts that control functions, primarily on a media pc
 
 The scripts are intended for use with UDEV and SYSTEMD
+
+These script allow for headless ripping and processing of Audio CD's
 
 To use navigate to a folder of your choice eg. ```/home/USER/temp``` or ```/home/USER/Downloads```.
 
