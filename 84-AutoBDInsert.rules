@@ -1,5 +1,0 @@
-# A udev rule to trigger ripping of dvd's, this script calls a service
-# this script should be stored in /etc/udev/rules.d/ with permissions 644
-# WHY? Udev has a system built in timeout that shuts down any run script if longer than about 10seconds, therefore some kind of handoff is needed
-# What variables can we use? ID_CDROM_MEDIA_BD = Bluray, ID_CDROM_MEDIA_DVD = DVD, ID_CDROM_MEDIA_CD = CD
-ACTION=="change",KERNEL=="sr0",SUBSYSTEM=="block",ATTRS{model}=="BD-CMB UJ160",ENV{ID_CDROM_MEDIA_BD}=="1",ENV{HOME}="/home/jlivin25",RUN+="/bin/systemctl start bd_ripping.service"
