@@ -21,6 +21,10 @@ if using CD ripping services you will also need my other repository
 ```bash
 git clone https://github.com/littlejeem/abcde_configs.git
 ```
+and
+```bash
+git clone https://github.com/littlejeem/sync_scripts.git
+```
 
 make the install script executable
 ```bash
