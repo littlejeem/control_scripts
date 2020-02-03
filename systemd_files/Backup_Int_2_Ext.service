@@ -1,14 +1,10 @@
-# A systemd service to trigger ripping of blu rays, this script is called by a udev rule
-# this script should be stored in /etc/systemd/system with permissions 444
-# https://askubuntu.com/questions/25071/how-to-run-a-script-when-a-specific-flash-drive-is-mounted
-
 [Unit]
-Description=My flashdrive script trigger
+Description=Backup Internal HD - External SSD
 Requires=media-Seagate_Ext.mount
-After=mmedia-Seagate_Ext.mount
+After=media-Seagate_Ext.mount
 
 [Service]
-ExecStart=/home/you/bin/triggerScript.sh
+ExecStart=/usr/local/bin/AutoBackupTest2.sh
 
 [Install]
 WantedBy=media-Seagate_Ext.mount
