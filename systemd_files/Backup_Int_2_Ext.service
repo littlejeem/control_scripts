@@ -4,7 +4,7 @@ Requires=media-Seagate_Ext.mount
 After=media-Seagate_Ext.mount
 
 [Service]
-ExecStart=/usr/local/bin/AutoBackupTest2.sh
+ExecStart=/usr/local/bin/AutoBackupInt2Ext.sh
 
 [Install]
 WantedBy=media-Seagate_Ext.mount
