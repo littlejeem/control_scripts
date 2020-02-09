@@ -1,12 +1,10 @@
-# A systemd service to trigger ripping of blu rays, this script is called by a udev rule
-# this script should be stored in /etc/sytemd/system with permissions 444
-
 [Unit]
-Description=Auto Backup Internal HDD - External USB
+Description=Backup Internal HD - External SSD
+Requires=media-Seagate_Ext.mount
+After=media-Seagate_Ext.mount
 
 [Service]
-Type=oneshot
 ExecStart=/usr/local/bin/AutoBackupInt2Ext.sh
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=media-Seagate_Ext.mount
