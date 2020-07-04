@@ -16,7 +16,7 @@
 
 global_enable_pushover=0
 global_source_drive="/dev/sr0"
-global_log_dir="/data/Ripping/logs"
+global_log_dir="/home/jlivin25/bin/scriptlogs"
 
 #####################################################################################################
 ####                                                                                             ####
@@ -53,11 +53,11 @@ enable_bluray=1
 bluray_ripper_name="BLURAY RIPPER"
 bluray_encoder_name="BLURAY ENCODE"
 
-bluray_output_dir="/data/Ripping/BR"
+bluray_output_dir="/home/jlivin25/Rips/bluerays"
 bluray_enable_cleanup=0
 bluray_enable_blackhole=0
 bluray_blackhole_dir="/data/Downloads/Completed/Movies"
-blur_log_dir="global_log_dir/bluray"
+bluray_log_dir="global_log_dir/bluray"
 
 bluray_hb_video="-e x264 --x264-preset veryslow --h264-profile high -q 18.0 -4 -f mp4 -O --maxWidth 1920 --decomb --loose-anamorphic --modulus 2 -m"
 bluray_hb_audio="-a 1,1 -E copy:dtshd,faac -B 640,192 -6 dpl2,6ch -R Auto,Auto -D 0.0,0.0 --audio-copy-mask dtshd,aac,ac3,dts,mp3 --audio-fallback ffac3"
