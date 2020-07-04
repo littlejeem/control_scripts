@@ -56,7 +56,7 @@ for bluray_title in "${bluray_dir_list[@]}"; do
 	        fi
 #
 #"Move into stream directory and grab name of largest file"
-bluray_stream="$bluray_title"/BDMV/STREAM)
+bluray_stream="$bluray_title"/BDMV/STREAM
 cd $bluray_stream
 largest_title=$(ls -S | head -1)
 echo "ripping $largest_title" >> $global_log_dir/bluray-encode.log
