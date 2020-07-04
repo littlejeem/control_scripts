@@ -3,8 +3,18 @@
 #+---------------------+
 #+---"Set Variables"---+
 #+---------------------+
-stamplog=$(echo "`date +%d%m%Y`-`date +%H_%M_%S`")
+stamp=$(echo "`date +%d%m%Y`-`date +%H_%M_%S`")
 config_file=/home/jlivin25/bin/myscripts/control_scripts/ripping_scripts/settings.conf
+#
+#
+#+---------------+
+#+---Functions---+
+#+---------------+
+function pushover () {
+  if [ "$global_enable_pushover" = 1 ]; then
+          echo "sending message via pushover"
+  fi
+}
 #
 #
 #+-------------------+
@@ -45,15 +55,18 @@ for bluray_title in "${bluray_dir_list[@]}"; do
 	                while [ -e /proc/$handbrake_pid ]; do sleep 1; done
 	        fi
 #
-	        # XBMC-NOTIFY : COMMENCING
-		if [ "$pushover_notify" = 1 ]; then
-		        echo "sending message via pushover"
-		fi
+#"Move into stream directory and grab name of largest file"
+bluray_stream="$bluray_title"/BDMV/STREAM)
+cd $bluray_stream
+largest_title=$(ls -S | head -1)
+echo "ripping $largest_title" >> $global_log_dir/bluray-encode.log
+pushover
 #
 		# COMMENCE THE ENCODING
-	        HandBrakeCLI -i $bluray_output_dir/$bluray_title -o $bluray_output_dir/$bluray_title.$bluray_extension $bluray_hb_video $bluray_hb_audio >> $global_log_dir/bluray-encode.log
+	        #HandBrakeCLI -i $bluray_output_dir/$bluray_title -o $bluray_output_dir/$bluray_title.$bluray_extension $bluray_hb_video $bluray_hb_audio >> $global_log_dir/bluray-encode.log
+          HandBrakeCLI --stop-at seconds:1200 --preset-import-file /home/jlivin25/bin/myscripts/control_scripts/ripping_scripts/custom_preset.json -Z "custom-test" -i $bluray_output_dir/$bluray_stream/$largest_title -o $bluray_output_dir/$bluray_title.$bluray_extension
                 # LOG : COMPLETED ENCODE
-                echo "$(timestamp) - COMPLETED:  Completed encode of $bluray_title" >> $global_log_dir/bluray-encode.log
+                echo "$(stamp) - COMPLETED:  Completed encode of $bluray_title" >> $global_log_dir/bluray-encode.log
 
 		# CHECK IF FILEN HAS BEEN ENCODED SUCCESSFULLY
                 if [ -f "$bluray_output_dir/$bluray_title.$bluray_extension" ]; then
@@ -66,22 +79,22 @@ for bluray_title in "${bluray_dir_list[@]}"; do
 					rm -R $bluray_output_dir/$bluray_title;
 				fi
 		                # LOG : REMOVED RIPPED BLURAY
-                                echo "$(timestamp) -  REMOVED:  Removed backup of $bluray_title" >> $global_log_dir/bluray-encode.log
+                                echo "$(stamp) -  REMOVED:  Removed backup of $bluray_title" >> $global_log_dir/bluray-encode.log
 				# CHECK FOR COUCHPOTATO BLACKHOLE
 				if [ "$bluray_enable_blackhole" = 1 ]; then
 					# MOVE RIPPED BLURAY TO BLACKHOLE
 	                                mv $bluray_output_dir/$bluray_title.$bluray_extension $bluray_blackhole_dir/$bluray_title.$bluray_extension >> $global_log_dir/bluray-encode.log
  	                                # LOG : MOVED ENCODED BLURAY TO BLACKHOLE
-		                        echo "$(timestamp) - MOVED:  $bluray_output_dir/$bluray_title.$bluray_extension --> $bluray_blackhole_dir/$bluray_title.$bluray_extension" >> $global_log_dir/bluray-encode.log
+		                        echo "$(stamp) - MOVED:  $bluray_output_dir/$bluray_title.$bluray_extension --> $bluray_blackhole_dir/$bluray_title.$bluray_extension" >> $global_log_dir/bluray-encode.log
                 	                chmod -R 777 $bluray_blackhole_dir
 				fi
                         else
                                 # LOG : RIPPED BLURAY WAS NOT BIGGER THAN THE MINIMUM FILESIZE EXPECTED
-                                echo "$(timestamp) - ERROR: $bluray_output_dir/$bluray_title.$bluray_extension ($bluray_actualsize) is under $bluray_minimumsize bytes" >> $global_log_dir/bluray-encode.log
+                                echo "$(stamp) - ERROR: $bluray_output_dir/$bluray_title.$bluray_extension ($bluray_actualsize) is under $bluray_minimumsize bytes" >> $global_log_dir/bluray-encode.log
                         fi
                 else
         	        # LOG : RIPPED BLURAY WAS NEVER CREATED (ERROR WITH HANDBRAKE ENCODE)
-	                echo "$(timestamp) - ERROR: $bluray_output_dir/$bluray_title.$bluray_extension was never created" >> $global_log_dir/bluray-encode.log
+	                echo "$(stamp) - ERROR: $bluray_output_dir/$bluray_title.$bluray_extension was never created" >> $global_log_dir/bluray-encode.log
                 fi
                 # LOG : COMPLETED ENCODE OF THIS BLURAY
 		echo "*********************************  COMPLETING:  $bluray_title  *********************************" >> $global_log_dir/bluray-encode.log
