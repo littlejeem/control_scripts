@@ -53,10 +53,10 @@ enable_bluray=1
 bluray_ripper_name="BLURAY RIPPER"
 bluray_encoder_name="BLURAY ENCODE"
 
-bluray_output_dir="/home/jlivin25/Rips/bluerays"
+bluray_output_dir="/home/jlivin25/Rips/blurays"
 bluray_enable_cleanup=0
 bluray_enable_blackhole=0
-bluray_blackhole_dir="/data/Downloads/Completed/Movies"
+bluray_blackhole_dir="/home/jlivin25/Downloads/Completed/Movies"
 bluray_log_dir="global_log_dir/bluray"
 
 bluray_hb_video="-e x264 --x264-preset veryslow --h264-profile high -q 18.0 -4 -f mp4 -O --maxWidth 1920 --decomb --loose-anamorphic --modulus 2 -m"
