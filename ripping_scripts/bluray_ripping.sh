@@ -1,5 +1,5 @@
 #!/bin/bash
-
+#
 # READ IN SETTINGS FILE
 CONFIG_FILE=/usr/bin/ace-encode/settings.conf
 
@@ -26,15 +26,10 @@ BLURAY_TITLE=$(blkid -o value -s LABEL $GLOBAL_SOURCE_DRIVE)
 BLURAY_TITLE=${BLURAY_TITLE// /_}
 
 # COMMENCE THE BACKUP OF THE BLURAY
-if [ ! -d "$BLURAY_OUTPUT_DIR/$BLURAY_TITLE" ]; then
-
+#if [ ! -d "$BLURAY_OUTPUT_DIR/$BLURAY_TITLE" ]; then
+#
 	# LOG : COMMENCING RIP OF THIS BLURAY
 	echo "********************************* COMMENCING: $BLURAY_TITLE *********************************" >> $BLURAY_LOG_DIR/bluray-rip.log
-
-	# XBMC-NOTIFY : COMMENCING
-	if [ "$GLOBAL_ENABLE_XBMC" = 1 ]; then
-        	xbmc-send --host=$GLOBAL_XBMC_HOST -a "Notification($BLURAY_RIPPER_NAME, Commencing backup $BLURAY_TITLE,20000)";
-	fi
 
 	# EMAIL-NOTIFY : COMMENCING
 	if [ "$GLOBAL_ENABLE_EMAIL" = 1 ]; then
