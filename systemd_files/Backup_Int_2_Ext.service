@@ -1,5 +1,8 @@
 [Unit]
 Description=Backup Internal HD - External SSD
+#media-Seagate_Ext.mount is set by the system when adding a line to fstab such as the following
+#/dev/disk/by-uuid/INSERTDISKUUIDHERE /media/Seagate_Ext auto user,rw,nofail 0 0
+#The mount folder must exist
 Requires=media-Seagate_Ext.mount
 After=media-Seagate_Ext.mount
 
