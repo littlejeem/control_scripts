@@ -1,0 +1,3 @@
+# ran udevadm info -a /dev/sdf and to get this
+# these pages were really helpful https://opensource.com/article/18/11/udev https://linuxconfig.org/tutorial-on-how-to-write-basic-udev-rules-in-linux
+ACTION=="add", KERNEL=="sd**", SUBSYSTEM=="block", ATTRS{serial}=="NA8TE99G", ENV{SYSTEMD_WANTS}="Backup_Int_2_Ext.service"
