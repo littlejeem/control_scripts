@@ -1,0 +1,66 @@
+
+directory: /home/jlivin25/Music/Library/PlayUploads
+library: /home/jlivin25/.config/beets/uploads/musiclibrary.blb
+
+import:
+    copy: no
+    move: yes
+    write: yes
+    resume: ask
+    quiet_fallback: skip
+    timid: no
+    log: beetslog.txt
+ignore: .AppleDouble ._* *~ .DS_Store
+art_filename: folder
+
+plugins: embedart chroma fetchart convert permissions gmusic
+
+pluginpath: /home/jlivin25/.config/beets/myplugins
+
+threaded: yes
+
+color: yes
+
+match:
+    strong_rec_thresh: 0.55
+
+paths:
+    default: $albumartist/$album/$track - $title - $artist
+    singleton: Singletons/$track - $title - $artist
+    comp: Various/$album/$track - $title - $artist
+    albumtype:soundtrack: Soundtracks/$album/$track - $title - $artist
+
+permissions:
+    file: 777
+    dir: 777
+
+convert:
+    never_convert_lossy_files: no
+    copy_album_art: yes
+    dest: /home/jlivin25/Music/Library/PlayUploads/
+    auto: yes
+    pretend: no
+    embed: yes
+    threads: 8
+    album_art_maxwidth: 0
+    quiet: no
+
+    format: mp3
+    formats:
+        flac:
+            extension: flac
+            command: ffmpeg -i $source -y -vn -acodec flac $dest
+        alac:
+            extension: m4a
+            command: ffmpeg -i $source -y -vn -acodec alac $dest
+        mp3:
+            extension: mp3
+            command: ffmpeg -i $source -y -vn -aq 2 $dest
+    max_bitrate: 500
+    tmpdir:
+
+gmusic:
+    email: <INSERT>
+    password: <INSERT>
+    auto: yes
+    oauth_file: /home/jlivin25/.config/beets/oauth.cred

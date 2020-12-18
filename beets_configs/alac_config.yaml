@@ -1,0 +1,57 @@
+
+directory: /home/jlivin25/Music/Library/alacimports
+library: /home/jlivin25/.config/beets/alac/musiclibrary.blb
+
+import:
+    copy: yes
+    move: no
+    write: yes
+    resume: ask
+    quiet_fallback: skip
+    timid: no
+    log: beetslog.txt
+ignore: .AppleDouble ._* *~ .DS_Store
+art_filename: folder
+
+plugins: embedart chroma fetchart convert permissions
+
+pluginpath: /home/jlivin25/.config/beets/myplugins
+
+threaded: yes
+
+color: yes
+
+match:
+    strong_rec_thresh: 0.55
+
+paths:
+    default: $albumartist/$album/$track - $title - $artist
+    singleton: Singletons/$track - $title - $artist
+    comp: Various/$album/$track - $title - $artist
+    albumtype:soundtrack: Soundtracks/$album/$track - $title - $artist
+
+permissions:
+    file: 777
+    dir: 777
+
+convert:
+    never_convert_lossy_files: yes
+    copy_album_art: yes
+    dest: /home/jlivin25/Music/Library/alacimports/
+    auto: yes
+    pretend: no
+    embed: yes
+    threads: 8
+    album_art_maxwidth: 0
+    quiet: no
+
+    format: alac
+    formats:
+        flac:
+            extension: flac
+            command: ffmpeg -i $source -y -vn -acodec flac $dest
+        alac:
+            extension: m4a
+            command: ffmpeg -i $source -y -vn -acodec alac $dest
+    max_bitrate: 500
+    tmpdir:
