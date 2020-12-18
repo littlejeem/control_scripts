@@ -26,12 +26,6 @@ if [[ $EUID -ne 0 ]]; then
 fi
 #
 #
-#+---------------------+
-#+---"Set Variables"---+
-#+---------------------+
-PATH=/sbin:/bin:/usr/bin:/home/jlivin25:/home/jlivin25/.local/bin:/home/jlivin25/bin
-#
-#
 #+-------------------+
 #+---Set functions---+
 #+-------------------+
@@ -75,10 +69,10 @@ source /home/$install_user/bin/standalone_scripts/helper_script.sh
 source /home/$install_user/bin/.config/ScriptSettings/sync_config.sh
 #
 #
-#+-------------------+
-#+---SET VARIABLES---+
-#+-------------------+
-INFLACPATH=/home/jlivin25/Music/flac              # - still in use?
+#+---------------------+
+#+---"Set Variables"---+
+#+---------------------+
+PATH=/sbin:/bin:/usr/bin:/home/jlivin25:/home/jlivin25/.local/bin:/home/jlivin25/bin
 #
 #
 #+----------------------+
