@@ -11,45 +11,96 @@
 ##########################################################################################################
 #
 #
-#####################
-### SET VARIABLES ### <-----------------move to a config file and read in?
-#####################
-locknamelong=`basename "$0"`                      # imports the name of this script
-lockname=${locknamelong::-3}                      # reduces the name to remove .sh
-logfolder=/home/jlivin25/bin/myscripts/scriptlogs # Where the logs are kept
-lognameCDRipping=$lockname.log                    # Uses the script name to create the log
-INALACPATH=/home/jlivin25/Music/m4a               # - still in use?
-INFLACPATH=/home/jlivin25/Music/flac              # - still in use?
-OUTALACPATH=/media/Data_1/Music/correct/Albums    # - still in use?
-OUTFLACPATH=/media/Data_1/Music/FLAC_Backups      # - still in use?
+#+-------------------+
+#+---"VERSION 2.0"---+
+#+-------------------+
 #
 #
-########################
-### DEFINE FUNCTIONS ###
-########################
-ripcd_flac () {
-abcde -j `getconf _NPROCESSORS_ONLN` -N -c /home/jlivin25/bin/myscripts/abcde_configs/abcde_flac.conf # <----------SWITCH TO VARIABLE IN CONFIG?
+#+----------------+
+#+---check ROOT---+
+#+----------------+
+if [[ $EUID -ne 0 ]]; then
+    echo "Please run this script with sudo:"
+    echo "sudo $0 $*"
+    exit 1
+fi
+#
+#
+#+---------------------+
+#+---"Set Variables"---+
+#+---------------------+
+PATH=/sbin:/bin:/usr/bin:/home/jlivin25:/home/jlivin25/.local/bin:/home/jlivin25/bin
+#
+#
+#+-------------------+
+#+---Set functions---+
+#+-------------------+
+function helpFunction () {
+   echo ""
+   echo "Usage: $0 -u ####"
+   echo "Usage: $0"
+   echo -e "\t Running the script with no flags causes default behaviour"
+   echo -e "\t-u Use this flag to specify a user to install jackett under"
+   exit 1 # Exit script after printing help
 }
 #
 #
-####################
-### START SCRIPT ###
-####################
-echo "----------------------------------------------------" >> $logfolder/$lognameCDRipping
-echo "`date +%d/%m/%Y` - `date +%H:%M:%S` - Script Started" >> $logfolder/$lognameCDRipping
+#+-----------------------+
+#+---Set up user flags---+
+#+-----------------------+
+while getopts u:h flag
+do
+    case "${flag}" in
+        u) user_install=${OPTARG};;
+        h) helpFunction;;
+        ?) helpFunction;;
+    esac
+done
 #
-echo "`date +%d/%m/%Y` - `date +%H:%M:%S` - Stage 1 - FLAC Ripping Started" >> $logfolder/$lognameCDRipping
-cd /home/jlivin25/Music/RipTransfers # <----------SWITCH TO VARIABLE IN CONFIG?
+#
+#+-------------------------+
+#+---Configure user name---+
+#+-------------------------+
+if [[ $user_install == "" ]]; then
+  install_user=jlivin25
+else
+  install_user=$(echo $user_install)
+fi
+#
+#
+#+-------------------+
+#+---Source helper---+
+#+-------------------+
+source /home/$install_user/bin/standalone_scripts/helper_script.sh
+source /home/$install_user/bin/.config/ScriptSettings/sync_config.sh
+#
+#
+#+-------------------+
+#+---SET VARIABLES---+
+#+-------------------+
+INFLACPATH=/home/jlivin25/Music/flac              # - still in use?
+#
+#
+#+----------------------+
+#+---Define Functions---+
+#+----------------------+
+ripcd_flac () {
+  abcde -j `getconf _NPROCESSORS_ONLN` -N -c /home/$install_user/bin/abcde_configs/abcde_flac.conf
+}
+#
+#
+#+------------------+
+#+---Start Script---+
+#+------------------+
+log "----------------------------------------------------"
+log "Script Started"
+log "Stage 1 - FLAC Ripping Started"
+cd $rip_flac
 ripcd_flac
-echo "`date +%d/%m/%Y` - `date +%H:%M:%S` - Stage 2 - FLAC Ripping Completed" >> $logfolder/$lognameCDRipping
-echo "`date +%d/%m/%Y` - `date +%H:%M:%S` - Stage 3 - Syncing Rip to Library" >> $logfolder/$lognameCDRipping
-sudo -u jlivin25 /home/jlivin25/bin/myscripts/MusicSync.sh # <----------SWITCH TO VARIABLE IN CONFIG?
+log "Stage 2 - FLAC Ripping Completed"
+log "Stage 3 - Syncing Rip to Library"
+sudo -u /home/$install_user/bin/myscripts/MusicSync.sh # <----------SWITCH TO VARIABLE IN CONFIG?
 eject
-echo "`date +%d/%m/%Y` - `date +%H:%M:%S` - Stage 4 - Complete - CD Ejected, End of Script" >> $logfolder/$lognameCDRipping
+log "Stage 4 - Complete - CD Ejected, End of Script"
 #
 exit 0
-#
-#
-#####################
-### END OF SCRIPT ###
-#####################
