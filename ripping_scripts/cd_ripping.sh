@@ -65,14 +65,14 @@ fi
 #+-------------------+
 #+---Source helper---+
 #+-------------------+
-source /home/$install_user/bin/standalone_scripts/helper_script.sh
-source /home/$install_user/bin/.config/ScriptSettings/sync_config.sh
+source /home/"$install_user"/bin/standalone_scripts/helper_script.sh
+source /home/"$install_user"/bin/.config/ScriptSettings/sync_config.sh
 #
 #
 #+---------------------+
 #+---"Set Variables"---+
 #+---------------------+
-PATH=/sbin:/bin:/usr/bin:/home/jlivin25:/home/jlivin25/.local/bin:/home/jlivin25/bin
+PATH=/sbin:/bin:/usr/bin:/home/"$install_user":/home/"$install_user"/.local/bin:/home/jlivin25/bin
 #
 #
 #+----------------------+
