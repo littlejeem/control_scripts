@@ -1,5 +1,9 @@
 #!/bin/bash
 #
+####################################
+### THS NEEDS WORK FOR VERSION 2 ###
+####################################
+
 UDEV_LOC="/etc/udev/rules.d/"
 SYSD_LOC="/etc/systemd/system/"
 if [[ $EUID -ne 0 ]]; then
