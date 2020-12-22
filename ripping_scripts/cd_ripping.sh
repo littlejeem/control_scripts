@@ -72,14 +72,14 @@ source /home/"$install_user"/bin/.config/ScriptSettings/sync_config.sh
 #+---------------------+
 #+---"Set Variables"---+
 #+---------------------+
-PATH=/sbin:/bin:/usr/bin:/home/"$install_user":/home/"$install_user"/.local/bin:/home/jlivin25/bin
+PATH=/sbin:/bin:/usr/bin:/home/"$install_user":/home/"$install_user"/.local/bin:/home/"$install_user"/bin
 #
 #
 #+----------------------+
 #+---Define Functions---+
 #+----------------------+
 ripcd_flac () {
-  abcde -j `getconf _NPROCESSORS_ONLN` -N -c /home/$install_user/bin/abcde_configs/abcde_flac.conf
+  abcde -j `getconf _NPROCESSORS_ONLN` -N -c /home/$install_user/bin/control_scripts/abcde_configs/abcde_flac.conf
 }
 #
 #
