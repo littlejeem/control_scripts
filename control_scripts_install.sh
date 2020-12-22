@@ -1,6 +1,9 @@
 #!/bin/bash
 #
 #
+#+---------------------+
+#+---"Set Variables"---+
+#+---------------------+
 install_user=jlivin25
 udev_loc="/etc/udev/rules.d/"
 sysd_loc="/etc/systemd/system/"
@@ -11,6 +14,17 @@ sysd_loc="/etc/systemd/system/"
 #+----------------------+
 if [[ $EUID -ne 0 ]]; then
   echo "This script must be run as root"
+  exit 1
+fi
+#
+#
+#+---------------------------+
+#+---"Source helper files"---+
+#+---------------------------+
+if [ -d "/home/"$install_user"/bin/standalone_scripts/helper_script.sh" ]; then
+  source /home/"$install_user"/bin/standalone_scripts/helper_script.sh
+else
+  echo "help file not found exiting"
   exit 1
 fi
 #
