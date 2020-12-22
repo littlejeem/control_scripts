@@ -93,7 +93,7 @@ fi
 if ! command -v abcde &> /dev/null
 then
   log_err "abcde could not be found, script won't function wihout it, attempting install"
-  apt update && apt install abcde
+  apt update && apt install abcde -y
   if ! command -v abcde &> /dev/null
   then
     log_err "abcde install failed, scripts won't function wihout it, exiting"
@@ -104,4 +104,25 @@ then
 else
     log "abcde command located, continuing"
 fi
+#
+#
+#+--------------------------------+
+#+---"Install FLAC requirement"---+
+#+--------------------------------+
+if ! command -v flac &> /dev/null
+then
+  log_err "FLAC could not be found, script won't function wihout it, attempting install"
+  apt update && apt install flac -y
+  if ! command -v flac &> /dev/null
+  then
+    log_err "FLAC install failed, scripts won't function wihout it, exiting"
+    exit 1
+  else
+    log "FLAC now installed, continuing"
+  fi
+else
+    log "FLAC command located, continuing"
+fi
+
+
 exit 0
