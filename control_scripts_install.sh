@@ -21,7 +21,7 @@ fi
 #+---------------------------+
 #+---"Source helper files"---+
 #+---------------------------+
-if [ -d "/home/"$install_user"/bin/standalone_scripts/helper_script.sh" ]; then
+if [ -f "/home/"$install_user"/bin/standalone_scripts/helper_script.sh" ]; then
   source /home/"$install_user"/bin/standalone_scripts/helper_script.sh
 else
   echo "help file not found exiting"
