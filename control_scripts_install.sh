@@ -32,14 +32,7 @@ fi
 #+-------------------------+
 #+---"Set up UDEV rules"---+ <---(symlink?)
 #+-------------------------+
-cp -r udev_rules/. $udev_loc
-if [[ $? -ne 0 ]]; then
-  log_err "copying UDEV rules failed"
-  exit 1
-else
-  log "UDEV rules copied"
-fi
-#modify permissions
+#modify SOURCE file permissions
 chmod -R 644 udev_rules
 if [[ $? -ne 0 ]]; then
   log_err "changing mode of UDEV files failed"
@@ -47,9 +40,16 @@ if [[ $? -ne 0 ]]; then
 else
   log "changing mode of UDEV files succeded"
 fi
+#copy files to dest
+cp -r udev_rules/. $udev_loc
+if [[ $? -ne 0 ]]; then
+  log_err "copying UDEV rules failed"
+  exit 1
+else
+  log "UDEV rules copied"
+fi
 #reload udev rules
 udevadm control --reload
-#
 if [[ $? -ne 0 ]]; then
   log_err "Reloading UDEV rules failed"
   exit 1
@@ -61,20 +61,21 @@ fi
 #+-------------------------------+
 #+---"Set up SYSTEMD services"---+ <---(symlink?)
 #+-------------------------------+
-cp -r systemd_files/. $sysd_loc
-if [[ $? -ne 0 ]]; then
-  log_err "copying services to systemd failed"
-  exit 1
-else
-  log "Services copied to systemd"
-fi
-#modify permissions
+#modify SOURCE file permissions
 chmod -R 444 systemd_files
 if [[ $? -ne 0 ]]; then
   log_err "changing mode of service files failed"
   exit 1
 else
   log "changing mode of service files succeded"
+fi
+#copy files to dest
+cp -r systemd_files/. $sysd_loc
+if [[ $? -ne 0 ]]; then
+  log_err "copying services to systemd failed"
+  exit 1
+else
+  log "Services copied to systemd"
 fi
 #reload udev rules
 systemctl daemon-reload
