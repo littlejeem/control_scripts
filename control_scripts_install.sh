@@ -170,12 +170,12 @@ if [ -d "/home/"$install_user"/.config" ]; then
   fi
 else
   log_deb "No existing .config folder located at /home/$install_user/.config, creating..."
-  mkdir "/home/$install_user/.config"
+  sudo -u "$install_user" mkdir "/home/$install_user/.config"
   if [ -f "/home/"$install_user"/bin/sync_scripts/config.sh" ]; then
     log "located default config file, copying in..."
     cp "/home/"$install_user"/bin/sync_scripts/config.sh" "/home/"$install_user"/.config/"
   else
-    log_err "No original or template .config folder and template located"
+    log_err "No original or template .config folder or template located"
     exit 1
   fi
 fi
