@@ -9,6 +9,42 @@ udev_loc="/etc/udev/rules.d/"
 sysd_loc="/etc/systemd/system/"
 #
 #
+#+-------------------+
+#+---Set functions---+
+#+-------------------+
+function helpFunction () {
+   echo ""
+   echo "Usage: $0 -u ####"
+   echo "Usage: $0"
+   echo -e "\t Running the script with no flags causes default behaviour"
+   echo -e "\t-u Use this flag to specify a user to install jackett under"
+   exit 1 # Exit script after printing help
+}
+#
+#
+#+-----------------------+
+#+---Set up user flags---+
+#+-----------------------+
+while getopts u:h flag
+do
+    case "${flag}" in
+        u) user_install=${OPTARG};;
+        h) helpFunction;;
+        ?) helpFunction;;
+    esac
+done
+#
+#
+#+-------------------------+
+#+---Configure user name---+
+#+-------------------------+
+if [[ $user_install = "" ]]; then
+  install_user=jlivin25
+else
+  install_user=$(echo $user_install)
+fi
+#
+#
 #+----------------------+
 #+---"Check for Root"---+
 #+----------------------+
@@ -124,6 +160,23 @@ then
 else
     log "FLAC command located, continuing"
 fi
-
-
+#
+#
+if [ -d "/home/"$install_user"/.config" ]; then
+  log "Located .config folder, looking for existing config.sh"
+  if [ -f "/home/"$install_user"/.config/Script_Settings/config.sh" ]; then
+    log "located existing config file, no further action"
+  fi
+else
+  log_deb "No existing .config folder located at /home/$install_user/.config, creating..."
+  mkdir "/home/$install_user/.config"
+  if [ -f "/home/"$install_user"/bin/sync_scripts/config.sh" ]; then
+    log "located default config file, copying in..."
+    cp "/home/"$install_user"/bin/sync_scripts/config.sh" "/home/"$install_user"/.config/"
+  else
+    log_err "No original or template .config folder and template located"
+    exit 1
+  fi
+fi
+log "control scripts install script completed"
 exit 0
