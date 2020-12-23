@@ -58,9 +58,10 @@ fi
 #+---"Source helper files"---+
 #+---------------------------+
 if [ -f "/home/"$install_user"/bin/standalone_scripts/helper_script.sh" ]; then
+  log "helper script found, using"
   source /home/"$install_user"/bin/standalone_scripts/helper_script.sh
 else
-  echo "help file not found exiting"
+  log_err "helper file not found exiting"
   exit 1
 fi
 #
@@ -69,7 +70,7 @@ fi
 #+---"Set up UDEV rules"---+ <---(symlink?)
 #+-------------------------+
 #modify SOURCE file permissions
-chmod -R 644 udev_rules
+chmod -R 644 /home/"$install_user"/bin/control_scripts/udev_rules
 if [[ $? -ne 0 ]]; then
   log_err "changing mode of UDEV files failed"
   exit 1
@@ -77,7 +78,7 @@ else
   log "changing mode of UDEV files succeded"
 fi
 #copy files to dest
-cp -r udev_rules/. $udev_loc
+cp -r /home/"$install_user"/bin/control_scripts/udev_rules/. $udev_loc
 if [[ $? -ne 0 ]]; then
   log_err "copying UDEV rules failed"
   exit 1
@@ -98,7 +99,7 @@ fi
 #+---"Set up SYSTEMD services"---+ <---(symlink?)
 #+-------------------------------+
 #modify SOURCE file permissions
-chmod -R 444 systemd_files
+chmod -R 444 /home/"$install_user"/bin/control_scripts/systemd_files
 if [[ $? -ne 0 ]]; then
   log_err "changing mode of service files failed"
   exit 1
@@ -106,7 +107,7 @@ else
   log "changing mode of service files succeded"
 fi
 #copy files to dest
-cp -r systemd_files/. $sysd_loc
+cp -r /home/"$install_user"/bin/control_scripts/systemd_files/. $sysd_loc
 if [[ $? -ne 0 ]]; then
   log_err "copying services to systemd failed"
   exit 1
