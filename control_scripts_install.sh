@@ -32,7 +32,7 @@ Drive_Detect () {
   else
     log_deb "changed to /tmp successfully"
   fi
-  log_deb $service_task
+  log_deb $udev_rule
   log_deb $drive_number
   log_deb $install_user
   log_deb $env_ammend
@@ -41,22 +41,22 @@ Drive_Detect () {
   log_deb $drive_model
   udev_insert=$(echo -e "ACTION==\"change\",KERNEL==\""$drive_number"\",SUBSYSTEM==\"block\",ATTRS{model}==\""$drive_model"\",ENV{ID_CDROM_MEDIA_"$env_ammend"}==\"1\",ENV{HOME}=\"/home/"$install_user"\",RUN+=\"/bin/systemctl start "$service_task"\"")
   log_deb $udev_insert
-  echo $udev_insert > $service_task
+  echo $udev_insert > $udev_rule
   #modify SOURCE file permissions
-  chmod 644 $service_task
+  chmod 644 $udev_rule
   if [[ $? -ne 0 ]]; then
-    log_err "changing mode of UDEV $service_task file failed"
+    log_err "changing mode of UDEV $udev_rule file failed"
     exit 1
   else
-    log "changing mode of UDEV $service_task file succeded"
+    log "changing mode of UDEV $udev_rule file succeded"
   fi
   #mv files into location
-  mv $service_task $udev_loc
+  mv $udev_rule $udev_loc
   if [[ $? -ne 0 ]]; then
-    log_err "moving UDEV rule $service_task file failed"
+    log_err "moving UDEV rule $udev_rule file failed"
     exit 1
   else
-    log "moving UDEV rule $service_task file succeded"
+    log "moving UDEV rule $udev_rule file succeded"
   fi
 }
 #
@@ -124,15 +124,15 @@ fi
 #+---"Set up UDEV rules"---+ <---(symlink?)
 #+-------------------------+
 #CD
-service_task="cd_ripping.service"
+udev_rule="82-AutoCDInsert.rules"
 env_ammend="CD" #ENV{ID_CDROM_MEDIA_CD}
 Drive_Detect
 #DVD
-service_task="dvd_ripping.service"
+udev_rule="83-AutoDVDInsert.rules"
 env_ammend="DVD" #ENV{ID_CDROM_MEDIA_CD}
 Drive_Detect
 #BLURAY
-service_task="bd_ripping.service"
+udev_rule="84-AutoBDInsert.rules"
 env_ammend="BD" #ENV{ID_CDROM_MEDIA_CD}
 Drive_Detect
 #reload udev rules
