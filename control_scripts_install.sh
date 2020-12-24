@@ -24,14 +24,30 @@ helpFunction () {
 }
 #
 #
+service_task="cd_ripping.service"
+drive_number="sr1"
+install_user="jlivin25"
+env_ammend="CD" #ENV{ID_CDROM_MEDIA_CD}
 Drive_Detect () {
+  cd /temp
+  echo $service_task
   echo $drive_number
-  drive_model=$(udevadm info /dev/$drive_number | grep ID_MODEL=)
+  echo $install_user
+  echo $env_ammend
+  drive_model=$(sudo udevadm info /dev/$drive_number | grep ID_MODEL=)
   drive_model=${drive_model:12}
   echo $drive_model
-  udev_insert=$(echo -e "ACTION==\"change\",KERNEL==\""$drive_number"\",SUBSYSTEM==\"block\",ATTRS{model}==\""$drive_model"\",ENV{ID_CDROM_MEDIA_CD}==\"1\",ENV{HOME}=\"/home/"$install_user"\",RUN+=\"/bin/systemctl start cd_ripping.service\"")
+  udev_insert=$(echo -e "ACTION==\"change\",KERNEL==\""$drive_number"\",SUBSYSTEM==\"block\",ATTRS{model}==\""$drive_model"\",ENV{ID_CDROM_MEDIA_"$env_ammend"}==\"1\",ENV{HOME}=\"/home/"$install_user"\",RUN+=\"/bin/systemctl start "$service_task"\"")
   echo $udev_insert
-  echo $udev_insert >> test.sh
+  echo $udev_insert > $service_task
+  chmod 644 $service_task
+  #modify SOURCE file permissions
+  if [[ $? -ne 0 ]]; then
+    log_err "changing mode of UDEV $service_task file failed"
+    exit 1
+  else
+    log "changing mode of UDEV $service_task file succeded"
+  fi
 }
 #
 #
@@ -97,22 +113,18 @@ fi
 #+-------------------------+
 #+---"Set up UDEV rules"---+ <---(symlink?)
 #+-------------------------+
-#modify SOURCE file permissions
-chmod -R 644 /home/"$install_user"/bin/control_scripts/udev_rules
-if [[ $? -ne 0 ]]; then
-  log_err "changing mode of UDEV files failed"
-  exit 1
-else
-  log "changing mode of UDEV files succeded"
-fi
-#copy files to dest
-cp -r /home/"$install_user"/bin/control_scripts/udev_rules/. $udev_loc
-if [[ $? -ne 0 ]]; then
-  log_err "copying UDEV rules failed"
-  exit 1
-else
-  log "UDEV rules copied"
-fi
+#CD
+service_task="cd_ripping.service"
+env_ammend="CD" #ENV{ID_CDROM_MEDIA_CD}
+Drive_Detect
+#DVD
+service_task="dvd_ripping.service"
+env_ammend="DVD" #ENV{ID_CDROM_MEDIA_CD}
+Drive_Detect
+#BLURAY
+service_task="bd_ripping.service"
+env_ammend="BD" #ENV{ID_CDROM_MEDIA_CD}
+Drive_Detect
 #reload udev rules
 udevadm control --reload
 if [[ $? -ne 0 ]]; then
