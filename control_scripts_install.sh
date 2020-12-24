@@ -125,14 +125,17 @@ fi
 #+-------------------------+
 #CD
 udev_rule="82-AutoCDInsert.rules"
+service_task="cd_ripping.service"
 env_ammend="CD" #ENV{ID_CDROM_MEDIA_CD}
 Drive_Detect
 #DVD
 udev_rule="83-AutoDVDInsert.rules"
+service_task="dvd_ripping.service"
 env_ammend="DVD" #ENV{ID_CDROM_MEDIA_CD}
 Drive_Detect
 #BLURAY
 udev_rule="84-AutoBDInsert.rules"
+service_task="bd_ripping.service"
 env_ammend="BD" #ENV{ID_CDROM_MEDIA_CD}
 Drive_Detect
 #reload udev rules
