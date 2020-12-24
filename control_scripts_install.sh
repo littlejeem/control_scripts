@@ -29,7 +29,7 @@ drive_number="sr1"
 install_user="jlivin25"
 env_ammend="CD" #ENV{ID_CDROM_MEDIA_CD}
 Drive_Detect () {
-  cd /temp
+  cd /tmp
   echo $service_task
   echo $drive_number
   echo $install_user
@@ -42,6 +42,14 @@ Drive_Detect () {
   echo $udev_insert > $service_task
   chmod 644 $service_task
   #modify SOURCE file permissions
+  if [[ $? -ne 0 ]]; then
+    log_err "changing mode of UDEV $service_task file failed"
+    exit 1
+  else
+    log "changing mode of UDEV $service_task file succeded"
+  fi
+  #mv files into location
+  mv $service_task $udev_loc
   if [[ $? -ne 0 ]]; then
     log_err "changing mode of UDEV $service_task file failed"
     exit 1
