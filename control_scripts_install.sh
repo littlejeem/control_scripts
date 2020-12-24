@@ -24,24 +24,26 @@ helpFunction () {
 }
 #
 #
-service_task="cd_ripping.service"
-drive_number="sr1"
-install_user="jlivin25"
-env_ammend="CD" #ENV{ID_CDROM_MEDIA_CD}
 Drive_Detect () {
   cd /tmp
-  echo $service_task
-  echo $drive_number
-  echo $install_user
-  echo $env_ammend
+  if [[ $? -ne 0 ]]; then
+    log_err "changing to /tmp failed, most likely this is a missing directory"
+    exit 1
+  else
+    log_deb "changed to /tmp successfully"
+  fi
+  log_deb $service_task
+  log_deb $drive_number
+  log_deb $install_user
+  log_deb $env_ammend
   drive_model=$(sudo udevadm info /dev/$drive_number | grep ID_MODEL=)
   drive_model=${drive_model:12}
-  echo $drive_model
+  log_deb $drive_model
   udev_insert=$(echo -e "ACTION==\"change\",KERNEL==\""$drive_number"\",SUBSYSTEM==\"block\",ATTRS{model}==\""$drive_model"\",ENV{ID_CDROM_MEDIA_"$env_ammend"}==\"1\",ENV{HOME}=\"/home/"$install_user"\",RUN+=\"/bin/systemctl start "$service_task"\"")
-  echo $udev_insert
-  echo $udev_insert > $service_task
-  chmod 644 $service_task
+  log_deb $udev_insert
+  log_deb $udev_insert > $service_task
   #modify SOURCE file permissions
+  chmod 644 $service_task
   if [[ $? -ne 0 ]]; then
     log_err "changing mode of UDEV $service_task file failed"
     exit 1
@@ -51,10 +53,10 @@ Drive_Detect () {
   #mv files into location
   mv $service_task $udev_loc
   if [[ $? -ne 0 ]]; then
-    log_err "changing mode of UDEV $service_task file failed"
+    log_err "moving UDEV rule $service_task file failed"
     exit 1
   else
-    log "changing mode of UDEV $service_task file succeded"
+    log "moving UDEV rule $service_task file succeded"
   fi
 }
 #
