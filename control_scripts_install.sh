@@ -12,36 +12,64 @@ sysd_loc="/etc/systemd/system/"
 #+-------------------+
 #+---Set functions---+
 #+-------------------+
-function helpFunction () {
+helpFunction () {
    echo ""
-   echo "Usage: $0 -u ####"
+   echo "Usage: $0 -u foo_user -d bar_drive"
    echo "Usage: $0"
    echo -e "\t Running the script with no flags causes default behaviour"
-   echo -e "\t-u Use this flag to specify a user to install jackett under"
+   echo -e "\t-u Use this flag to specify a user to install scripts under, eg. user foo is entered -u foo, as i made these scripts for myself the defualt user is my own"
+   echo -e "\t-g Use this flag to specify a usergroup to install scripts under, eg. group bar is entered -g bar, combined with the -u flag these settings will be used as: chown foo:bar. As i made these scripts for myself the defualt group is my own"
+   echo -e "\t-d Use this flag to specify the identity of the CD/DVD/BLURAY drive being used, eg. /dev/sr1 is entered -d sr1, sr0 will be the assumed default "
    exit 1 # Exit script after printing help
+}
+#
+#
+Drive_Detect () {
+  echo $drive_number
+  drive_model=$(udevadm info /dev/$drive_number | grep ID_MODEL=)
+  drive_model=${drive_model:12}
+  echo $drive_model
+  udev_insert=$(echo -e "ACTION==\"change\",KERNEL==\""$drive_number"\",SUBSYSTEM==\"block\",ATTRS{model}==\""$drive_model"\",ENV{ID_CDROM_MEDIA_CD}==\"1\",ENV{HOME}=\"/home/"$install_user"\",RUN+=\"/bin/systemctl start cd_ripping.service\"")
+  echo $udev_insert
+  echo $udev_insert >> test.sh
 }
 #
 #
 #+-----------------------+
 #+---Set up user flags---+
 #+-----------------------+
-while getopts u:h flag
+while getopts u:g:d:h flag
 do
     case "${flag}" in
         u) user_install=${OPTARG};;
+        g) group_install=${OPTARG};;
+        d) drive_install=${OPTARG};;
         h) helpFunction;;
         ?) helpFunction;;
     esac
 done
 #
 #
-#+-------------------------+
-#+---Configure user name---+
-#+-------------------------+
+#+-------------------------------+
+#+---Configure GETOPTS options---+
+#+-------------------------------+
+#user
 if [[ $user_install = "" ]]; then
-  install_user=jlivin25
+  install_user="jlivin25"
 else
   install_user=$(echo $user_install)
+fi
+#group
+if [[ $group_install = "" ]]; then
+  install_user="jlivin25"
+else
+  install_group=$(echo $group_install)
+fi
+#drive
+if [[ $drive_install = "" ]]; then
+  drive_number="sr0"
+else
+  drive_number=$(echo $drive_install)
 fi
 #
 #
