@@ -41,7 +41,7 @@ Drive_Detect () {
   log_deb $drive_model
   udev_insert=$(echo -e "ACTION==\"change\",KERNEL==\""$drive_number"\",SUBSYSTEM==\"block\",ATTRS{model}==\""$drive_model"\",ENV{ID_CDROM_MEDIA_"$env_ammend"}==\"1\",ENV{HOME}=\"/home/"$install_user"\",RUN+=\"/bin/systemctl start "$service_task"\"")
   log_deb $udev_insert
-  log_deb $udev_insert > $service_task
+  echo $udev_insert > $service_task
   #modify SOURCE file permissions
   chmod 644 $service_task
   if [[ $? -ne 0 ]]; then
@@ -112,7 +112,7 @@ fi
 #+---"Source helper files"---+
 #+---------------------------+
 if [ -f "/home/"$install_user"/bin/standalone_scripts/helper_script.sh" ]; then
-  log "helper script found, using"
+  echo "$(date +%b"  "%-d" "%T)" " "INFO: helper script found, using it
   source /home/"$install_user"/bin/standalone_scripts/helper_script.sh
 else
   log_err "helper file not found exiting"
