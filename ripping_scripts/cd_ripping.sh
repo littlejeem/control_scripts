@@ -93,7 +93,7 @@ cd $rip_flac
 ripcd_flac
 log "Stage 2 - FLAC Ripping Completed"
 log "Stage 3 - Syncing Rip to Library"
-sudo -u $install_user /home/"$install_user"/bin/myscripts/MusicSync.sh # <----------SWITCH TO VARIABLE IN CONFIG?
+sudo -u $install_user /home/"$install_user"/bin/sync_scripts/MusicSync.sh # <----------SWITCH TO VARIABLE IN CONFIG?
 eject
 log "Stage 4 - Complete - CD Ejected, End of Script"
 #
