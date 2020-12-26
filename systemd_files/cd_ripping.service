@@ -6,7 +6,7 @@ Description=Auto CD ripper
 
 [Service]
 Type=oneshot
-ExecStart=/home/jlivin25/bin/myscripts/controlscripts/cd_ripping.sh
+ExecStart=/home/jlivin25/bin/controlscripts/cd_ripping.sh
 
 [Install]
 WantedBy=multi-user.target
