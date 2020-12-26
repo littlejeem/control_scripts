@@ -36,6 +36,7 @@ Drive_Detect () {
   log_deb $drive_number
   log_deb $install_user
   log_deb $env_ammend
+  log_deb $service_task
   drive_model=$(sudo udevadm info /dev/$drive_number | grep ID_MODEL=)
   drive_model=${drive_model:12}
   log_deb $drive_model
