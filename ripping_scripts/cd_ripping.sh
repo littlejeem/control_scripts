@@ -66,7 +66,7 @@ fi
 #+---Source helper---+
 #+-------------------+
 source /home/"$install_user"/bin/standalone_scripts/helper_script.sh
-source /home/"$install_user"/bin/.config/ScriptSettings/sync_config.sh
+source /home/"$install_user"/.config/ScriptSettings/sync_config.sh
 #
 #
 #+---------------------+
