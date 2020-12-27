@@ -219,7 +219,9 @@ fi
 if [ -d "/home/"$install_user"/.config" ]; then
   log "Located .config folder, looking for existing config.sh"
   if [ -f "/home/"$install_user"/.config/Script_Settings/sync_config.sh" ]; then
-    log "located existing config file, no further action"
+    log "located existing sync_config file, no further action"
+  else
+    log_err "No existing sync_config file found, error?"
   fi
 else
   log_deb "No existing .config folder located at /home/$install_user/.config, creating..."
