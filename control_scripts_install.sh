@@ -219,7 +219,55 @@ fi
 if [ -d "/home/"$install_user"/.config" ]; then
   log "Located .config folder, looking for existing sync_config.sh"
   if [ -f "/home/"$install_user"/.config/ScriptSettings/sync_config.sh" ]; then
-    log "located existing sync_config file, no further action"
+    log "located existing sync_config file, using..."
+    source /home/"$install_user"/.config/ScriptSettings/sync_config.sh
+    #+-------------------------------------+
+    #+---"Check necessary folders exist"---+
+    #+-------------------------------------+
+    #flac dest
+    if [ -d "$FLAC_musicdest" ]; then
+      log "flac music destination already exists, using"
+    else
+      log_deb "flac music destination doesn't exist, creating"
+      mkdir -p $FLAC_musicdest
+      if [[ $? -ne 1 ]]; then
+        if [ -d "$FLAC_musicdest" ]; then
+          log "flac music destination created successfully at $FLAC_musicdest"
+        fi
+      else
+        log_err "flac music destination not able to be created, exiting"
+        exit 1
+      fi
+      chown $user_install:$group_install $FLAC_musicdest
+      if [[ $? -ne 1 ]]; then
+        log "successfully chmod'ed directory $FLAC_musicdest"
+      else
+        log_err "chmod'ing directory; $FLAC_musicdest failed, exiting"
+        exit 1
+      fi
+    fi
+    #alac dest
+    if [ -d "$M4A_musicdest" ]; then
+      log "flac music destination already exists, using"
+    else
+      log_deb "flac music destination doesn't exist, creating"
+      mkdir -p $M4A_musicdest
+      if [[ $? -ne 1 ]]; then
+        if [ -d "$M4A_musicdest" ]; then
+          log "flac music destination created successfully at $M4A_musicdest"
+        fi
+      else
+        log_err "flac music destination not able to be created, exiting"
+        exit 1
+      fi
+      chown $user_install:$group_install $M4A_musicdest
+      if [[ $? -ne 1 ]]; then
+        log "successfully chmod'ed directory $M4A_musicdest"
+      else
+        log_err "chmod'ing directory; $M4A_musicdest failed, exiting"
+        exit 1
+      fi
+    fi
   else
     log_err "No existing sync_config file found, error?"
   fi
@@ -229,6 +277,7 @@ else
   if [ -f "/home/"$install_user"/bin/sync_scripts/config.sh" ]; then
     log "located default config file, copying in..."
     cp "/home/"$install_user"/bin/sync_scripts/config.sh" "/home/"$install_user"/.config/ScriptSettings/sync_config.sh"
+    log "Please now set up required conditions, locations and options in /home/"$install_user"/.config/ScriptSettings/sync_config.sh and re-run this script"
   else
     log_err "No original or template .config folder or template located"
     exit 1
@@ -236,52 +285,5 @@ else
 fi
 #
 #
-#+-------------------------------------+
-#+---"Check necessary folders exist"---+
-#+-------------------------------------+
-#flac dest
-if [ -d "$FLAC_musicdest" ]; then
-  log "flac music destination already exists, using"
-else
-  log_deb "flac music destination doesn't exist, creating"
-  mkdir -p $FLAC_musicdest
-  if [[ $? -ne 1 ]]; then
-    if [ -d "$FLAC_musicdest" ]; then
-      log "flac music destination created successfully at $FLAC_musicdest"
-    fi
-  else
-    log_err "flac music destination not able to be created, exiting"
-    exit 1
-  fi
-  chown $user_install:$group_install $FLAC_musicdest
-  if [[ $? -ne 1 ]]; then
-    log "successfully chmod'ed directory $FLAC_musicdest"
-  else
-    log_err "chmod'ing directory; $FLAC_musicdest failed, exiting"
-    exit 1
-  fi
-fi
-#alac dest
-if [ -d "$M4A_musicdest" ]; then
-  log "flac music destination already exists, using"
-else
-  log_deb "flac music destination doesn't exist, creating"
-  mkdir -p $M4A_musicdest
-  if [[ $? -ne 1 ]]; then
-    if [ -d "$M4A_musicdest" ]; then
-      log "flac music destination created successfully at $M4A_musicdest"
-    fi
-  else
-    log_err "flac music destination not able to be created, exiting"
-    exit 1
-  fi
-  chown $user_install:$group_install $M4A_musicdest
-  if [[ $? -ne 1 ]]; then
-    log "successfully chmod'ed directory $M4A_musicdest"
-  else
-    log_err "chmod'ing directory; $M4A_musicdest failed, exiting"
-    exit 1
-  fi
-fi
 log "control scripts install script completed"
 exit 0
