@@ -217,18 +217,18 @@ fi
 #
 #
 if [ -d "/home/"$install_user"/.config" ]; then
-  log "Located .config folder, looking for existing config.sh"
-  if [ -f "/home/"$install_user"/.config/Script_Settings/sync_config.sh" ]; then
+  log "Located .config folder, looking for existing sync_config.sh"
+  if [ -f "/home/"$install_user"/.config/ScriptSettings/sync_config.sh" ]; then
     log "located existing sync_config file, no further action"
   else
     log_err "No existing sync_config file found, error?"
   fi
 else
   log_deb "No existing .config folder located at /home/$install_user/.config, creating..."
-  sudo -u "$install_user" mkdir "/home/$install_user/.config"
+  sudo -u "$install_user" mkdir "/home/$install_user/.config/ScriptSettings"
   if [ -f "/home/"$install_user"/bin/sync_scripts/config.sh" ]; then
     log "located default config file, copying in..."
-    cp "/home/"$install_user"/bin/sync_scripts/config.sh" "/home/"$install_user"/.config/"
+    cp "/home/"$install_user"/bin/sync_scripts/config.sh" "/home/"$install_user"/.config/ScriptSettings/sync_config.sh"
   else
     log_err "No original or template .config folder or template located"
     exit 1
