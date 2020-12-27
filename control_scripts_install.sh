@@ -218,7 +218,7 @@ fi
 #
 if [ -d "/home/"$install_user"/.config" ]; then
   log "Located .config folder, looking for existing config.sh"
-  if [ -f "/home/"$install_user"/.config/Script_Settings/config.sh" ]; then
+  if [ -f "/home/"$install_user"/.config/Script_Settings/sync_config.sh" ]; then
     log "located existing config file, no further action"
   fi
 else
