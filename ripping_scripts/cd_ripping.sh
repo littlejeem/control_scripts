@@ -79,7 +79,7 @@ PATH=/sbin:/bin:/usr/bin:/home/"$install_user":/home/"$install_user"/.local/bin:
 #+---Define Functions---+
 #+----------------------+
 ripcd_flac () {
-  abcde -j `getconf _NPROCESSORS_ONLN` -N -c /home/$install_user/bin/control_scripts/abcde_configs/abcde_flac.conf -d /dev/sr1
+  abcde -j `getconf _NPROCESSORS_ONLN` -N -c /home/"$install_user"/bin/control_scripts/abcde_configs/abcde_flac.conf -d /dev/$drive_install
 }
 #
 #
@@ -93,7 +93,7 @@ ripcd_flac
 log "Stage 2 - FLAC Ripping Completed"
 log "Stage 3 - Syncing Rip to Library"
 sudo -u $install_user /home/"$install_user"/bin/sync_scripts/MusicSync.sh # <----------SWITCH TO VARIABLE IN CONFIG?
-eject
+eject /dev/$drive_install
 log "Stage 4 - Complete - CD Ejected, End of Script"
 #
 exit 0
