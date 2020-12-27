@@ -4,7 +4,6 @@
 #+---------------------+
 #+---"Set Variables"---+
 #+---------------------+
-install_user=jlivin25
 udev_loc="/etc/udev/rules.d/"
 sysd_loc="/etc/systemd/system/"
 #
@@ -82,9 +81,9 @@ done
 #+-------------------------------+
 #user
 if [[ $user_install = "" ]]; then
-  install_user="jlivin25"
+  export install_user="jlivin25"
 else
-  install_user=$(echo $user_install)
+  export install_user=$(echo $user_install)
 fi
 #group
 if [[ $group_install = "" ]]; then
@@ -153,7 +152,7 @@ fi
 #+---"Set up SYSTEMD services"---+ <---(symlink?)
 #+-------------------------------+
 #modify SOURCE file permissions
-chmod -R 444 /home/"$install_user"/bin/control_scripts/systemd_files
+chmod -R 0644 /home/"$install_user"/bin/control_scripts/systemd_files
 if [[ $? -ne 0 ]]; then
   log_err "changing mode of service files failed"
   exit 1
