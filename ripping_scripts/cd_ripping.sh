@@ -79,14 +79,13 @@ PATH=/sbin:/bin:/usr/bin:/home/"$install_user":/home/"$install_user"/.local/bin:
 #+---Define Functions---+
 #+----------------------+
 ripcd_flac () {
-  abcde -j `getconf _NPROCESSORS_ONLN` -N -c /home/$install_user/bin/control_scripts/abcde_configs/abcde_flac.conf -d /dev/sr1 -a
+  abcde -j `getconf _NPROCESSORS_ONLN` -N -c /home/$install_user/bin/control_scripts/abcde_configs/abcde_flac.conf -d /dev/sr1
 }
 #
 #
 #+------------------+
 #+---Start Script---+
 #+------------------+
-log "----------------------------------------------------"
 log "Script Started"
 log "Stage 1 - FLAC Ripping Started"
 cd $rip_flac
