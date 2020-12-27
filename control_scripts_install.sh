@@ -115,7 +115,7 @@ if [ -f "/home/"$install_user"/bin/standalone_scripts/helper_script.sh" ]; then
   echo "$(date +%b"  "%-d" "%T)" " "INFO: helper script found, using it
   source /home/"$install_user"/bin/standalone_scripts/helper_script.sh
 else
-  log_err "helper file not found exiting"
+  echo "$(date +%b"  "%-d" "%T)" " "ERROR: helper file not found exiting
   exit 1
 fi
 #
@@ -229,6 +229,47 @@ else
     cp "/home/"$install_user"/bin/sync_scripts/config.sh" "/home/"$install_user"/.config/"
   else
     log_err "No original or template .config folder or template located"
+    exit 1
+  fi
+fi
+#
+#
+#+-------------------------------------+
+#+---"Check necessary folders exist"---+
+#+-------------------------------------+
+#flac dest
+if [ -d "$FLAC_musicdest" ]; then
+  log "flac music destination already exists, using"
+else
+  log_deb "flac music destination doesn't exist, creating"
+  mdkir -p $FLAC_musicdest
+  if [[ $? -ne 1 ]]; then
+    if [ -d "$FLAC_musicdest" ]; then
+      log "flac music destination created successfully at $FLAC_musicdest"
+    else
+      log_err "flac music destination not able to be created, exiting"
+      exit 1
+    fi
+  else
+    log_err "flac music destination not able to be created, exiting"
+    exit 1
+  fi
+fi
+#alac dest
+if [ -d "$M4A_musicdest" ]; then
+  log "flac music destination already exists, using"
+else
+  log_deb "flac music destination doesn't exist, creating"
+  mdkir -p $M4A_musicdest
+  if [[ $? -ne 1 ]]; then
+    if [ -d "$M4A_musicdest" ]; then
+      log "flac music destination created successfully at $M4A_musicdest"
+    else
+      log_err "flac music destination not able to be created, exiting"
+      exit 1
+    fi
+  else
+    log_err "flac music destination not able to be created, exiting"
     exit 1
   fi
 fi
