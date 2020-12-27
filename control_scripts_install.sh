@@ -242,7 +242,7 @@ if [ -d "$FLAC_musicdest" ]; then
   log "flac music destination already exists, using"
 else
   log_deb "flac music destination doesn't exist, creating"
-  mdkir -p $FLAC_musicdest
+  mkdir -p $FLAC_musicdest
   if [[ $? -ne 1 ]]; then
     if [ -d "$FLAC_musicdest" ]; then
       log "flac music destination created successfully at $FLAC_musicdest"
@@ -251,7 +251,7 @@ else
     log_err "flac music destination not able to be created, exiting"
     exit 1
   fi
-  chmod $user_install:$group_install $FLAC_musicdest
+  chown $user_install:$group_install $FLAC_musicdest
   if [[ $? -ne 1 ]]; then
     log "successfully chmod'ed directory $FLAC_musicdest"
   else
@@ -264,7 +264,7 @@ if [ -d "$M4A_musicdest" ]; then
   log "flac music destination already exists, using"
 else
   log_deb "flac music destination doesn't exist, creating"
-  mdkir -p $M4A_musicdest
+  mkdir -p $M4A_musicdest
   if [[ $? -ne 1 ]]; then
     if [ -d "$M4A_musicdest" ]; then
       log "flac music destination created successfully at $M4A_musicdest"
@@ -273,7 +273,7 @@ else
     log_err "flac music destination not able to be created, exiting"
     exit 1
   fi
-  chmod $user_install:$group_install $M4A_musicdest
+  chown $user_install:$group_install $M4A_musicdest
   if [[ $? -ne 1 ]]; then
     log "successfully chmod'ed directory $M4A_musicdest"
   else
