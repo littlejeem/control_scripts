@@ -42,10 +42,11 @@ function helpFunction () {
 #+-----------------------+
 #+---Set up user flags---+
 #+-----------------------+
-while getopts u:h flag
+while getopts u:d:h flag
 do
     case "${flag}" in
         u) user_install=${OPTARG};;
+        d) drive_install=${OPTARG};;
         h) helpFunction;;
         ?) helpFunction;;
     esac
@@ -60,6 +61,20 @@ if [[ $user_install == "" ]]; then
 else
   install_user=$(echo $user_install)
 fi
+#
+#
+#+-------------------------+
+#+---Configure user name---+
+#+-------------------------+
+if [[ $drive_install == "" ]]; then
+  install_drive=sr0
+else
+  install_drive=$(echo $user_install)
+fi
+#
+#
+
+
 #
 #
 #+-------------------+
