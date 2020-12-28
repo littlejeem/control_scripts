@@ -57,31 +57,27 @@ done
 #+---Configure user name---+
 #+-------------------------+
 if [[ $user_install == "" ]]; then
-  install_user=jlivin25
+  install_user="$USER"
 else
   install_user=$(echo $user_install)
 fi
 #
 #
-#+-------------------------+
-#+---Configure user name---+
-#+-------------------------+
+#+--------------------------+
+#+---Configure drive used---+
+#+--------------------------+
 if [[ $drive_install == "" ]]; then
   install_drive=sr0
 else
-  install_drive=$(echo $user_install)
+  install_drive=$(echo $drive_install)
 fi
-#
-#
-
-
 #
 #
 #+-------------------+
 #+---Source helper---+
 #+-------------------+
-source /home/"$install_user"/bin/standalone_scripts/helper_script.sh
-source /home/"$install_user"/.config/ScriptSettings/sync_config.sh
+source $HOME/bin/standalone_scripts/helper_script.sh
+source $HOME/.config/ScriptSettings/sync_config.sh
 #
 #
 #+---------------------+
@@ -94,7 +90,7 @@ PATH=/sbin:/bin:/usr/bin:/home/"$install_user":/home/"$install_user"/.local/bin:
 #+---Define Functions---+
 #+----------------------+
 ripcd_flac () {
-  abcde -j `getconf _NPROCESSORS_ONLN` -N -c /home/"$install_user"/bin/control_scripts/abcde_configs/abcde_flac.conf -d /dev/$drive_install
+  abcde -j `getconf _NPROCESSORS_ONLN` -N -c /home/"$install_user"/bin/control_scripts/abcde_configs/abcde_flac.conf -d /dev/"$drive_install"
 }
 #
 #
