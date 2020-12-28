@@ -16,13 +16,19 @@
 #+-------------------+
 #
 #
-#+----------------+
-#+---check ROOT---+
-#+----------------+
-if [[ $EUID -ne 0 ]]; then
+#+---------------------------------------+
+#+---check if run from systemd or ROOT---+
+#+---------------------------------------+
+if [[ -z "${INVOCATION_ID+x}" ]]; then
+  echo "no INVOCATION_ID set"
+  if [[ $EUID -ne 0 ]]; then
     echo "Please run this script with sudo:"
     echo "sudo $0 $*"
     exit 1
+  else
+    echo "INVOCATION_ID is set as: $INVOCATION_ID"
+    
+  fi
 fi
 #
 #
