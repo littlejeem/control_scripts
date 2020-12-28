@@ -37,6 +37,8 @@ Drive_Detect () {
   log_deb $env_ammend
   log_deb $service_task
   drive_model=$(sudo udevadm info /dev/$drive_number | grep ID_MODEL=)
+  #drive_model=$(sudo udevadm info -a -n /dev/sr1 | grep ATTRS{model}==)
+  #ATTRS{model}=="BD-CMB UJ160    "
   drive_model=${drive_model:12}
   log_deb $drive_model
   udev_insert=$(echo -e "ACTION==\"change\",KERNEL==\""$drive_number"\",SUBSYSTEM==\"block\",ATTRS{model}==\""$drive_model"\",ENV{ID_CDROM_MEDIA_"$env_ammend"}==\"1\",ENV{HOME}=\"/home/"$install_user"\",RUN+=\"/bin/systemctl start "$service_task"\"")
@@ -102,6 +104,9 @@ fi
 #+----------------------+
 #+---"Check for Root"---+
 #+----------------------+
+log_deb env
+log "INVOCATION_ID is set as: $INVOCATION_ID"
+log "EUID is set as: $EUID"
 if [[ $EUID -ne 0 ]]; then
   echo "This script must be run as root"
   exit 1
@@ -251,7 +256,7 @@ if [ -d "/home/"$install_user"/.config" ]; then
       log "flac music destination already exists, using"
     else
       log_deb "flac music destination doesn't exist, creating"
-      mkdir -p $M4A_musicdest
+      sudo -u $install_user mkdir -p $M4A_musicdest
       if [[ $? -ne 1 ]]; then
         if [ -d "$M4A_musicdest" ]; then
           log "flac music destination created successfully at $M4A_musicdest"
