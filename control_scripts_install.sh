@@ -35,13 +35,12 @@ Drive_Detect () {
   log_deb $drive_number
   log_deb $install_user
   log_deb $env_ammend
-  log_deb $service_task
   drive_model=$(sudo udevadm info /dev/$drive_number | grep ID_MODEL=)
   #drive_model=$(sudo udevadm info -a -n /dev/sr1 | grep ATTRS{model}==)
   #ATTRS{model}=="BD-CMB UJ160    "
   drive_model=${drive_model:12}
   log_deb $drive_model
-  udev_insert=$(echo -e "ACTION==\"change\",KERNEL==\""$drive_number"\",SUBSYSTEM==\"block\",ATTRS{model}==\""$drive_model"\",ENV{ID_CDROM_MEDIA_"$env_ammend"}==\"1\",ENV{HOME}=\"/home/"$install_user"\",RUN+=\"/bin/systemctl start "$service_task"\"")
+  udev_insert=$(echo -e "ACTION==\"change\",KERNEL==\""$drive_number"\",SUBSYSTEM==\"block\",ATTRS{model}==\""$drive_model"\",ENV{ID_CDROM_MEDIA_"$env_ammend"}==\"1\",ENV{HOME}=\"/home/"$install_user"\",RUN+=\"/bin/systemctl start "${env_ammend}_ripping.sh"\"")
   log_deb $udev_insert
   echo $udev_insert > $udev_rule
   #modify SOURCE file permissions
@@ -60,6 +59,27 @@ Drive_Detect () {
   else
     log "moving UDEV rule $udev_rule file succeded"
   fi
+}
+#
+#
+systemd_service_create () {
+cat > /etc/systemd/system/${env_ammend}_ripping.service <<EOF
+
+[Unit]
+Description=$env_ammend Ripping Service
+
+[Service]
+SyslogIdentifier=${env_ammend}_ripping_service
+Restart=always
+RestartSec=5
+Type=simple
+User=$install_user
+ExecStart=/home/$install_user/bin/control_scripts/ripping_scripts/${env_ammend}_ripping.sh
+TimeoutStopSec=20
+
+[Install]
+WantedBy=multi-user.target
+EOF
 }
 #
 #
@@ -128,22 +148,27 @@ fi
 #+-------------------------+
 #+---"Set up UDEV rules"---+ <---(symlink?)
 #+-------------------------+
+log "setting up UDEV rules & SYSTEMD services"
 #CD
 udev_rule="82-AutoCDInsert.rules"
-service_task="cd_ripping.service"
 env_ammend="CD" #ENV{ID_CDROM_MEDIA_CD}
 Drive_Detect
+systemd_service_create
 #DVD
 udev_rule="83-AutoDVDInsert.rules"
-service_task="dvd_ripping.service"
-env_ammend="DVD" #ENV{ID_CDROM_MEDIA_CD}
+env_ammend="DVD" #ENV{ID_CDROM_MEDIA_DVD}
 Drive_Detect
+systemd_service_create
 #BLURAY
 udev_rule="84-AutoBDInsert.rules"
-service_task="bd_ripping.service"
-env_ammend="BD" #ENV{ID_CDROM_MEDIA_CD}
+env_ammend="BD" #ENV{ID_CDROM_MEDIA_BD}
 Drive_Detect
+systemd_service_create
+#
+log "created UDEV & SYSTEMD files"
+#
 #reload udev rules
+log "reloading UDEV rules"
 udevadm control --reload
 if [[ $? -ne 0 ]]; then
   log_err "Reloading UDEV rules failed"
@@ -151,35 +176,13 @@ if [[ $? -ne 0 ]]; then
 else
   log "Reloading UDEV rules succeded"
 fi
-#
-#
-#+-------------------------------+
-#+---"Set up SYSTEMD services"---+ <---(symlink?)
-#+-------------------------------+
-#modify SOURCE file permissions
-chmod -R 0644 /home/"$install_user"/bin/control_scripts/systemd_files
-if [[ $? -ne 0 ]]; then
-  log_err "changing mode of service files failed"
-  exit 1
-else
-  log "changing mode of service files succeded"
-fi
-#copy files to dest
-cp -r /home/"$install_user"/bin/control_scripts/systemd_files/. $sysd_loc
-if [[ $? -ne 0 ]]; then
-  log_err "copying services to systemd failed"
-  exit 1
-else
-  log "Services copied to systemd"
-fi
-#reload udev rules
+#reload systemd services
 systemctl daemon-reload
-#
 if [[ $? -ne 0 ]]; then
-  log_err "Reloading UDEV rules failed"
+  log_err "Reloading .service files failed"
   exit 1
 else
-  log "Reloading UDEV rules succeded"
+  log "Reloading .service files succeded"
 fi
 #
 #
