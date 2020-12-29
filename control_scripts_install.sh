@@ -229,6 +229,28 @@ if [ -d "/home/"$install_user"/.config" ]; then
     #+-------------------------------------+
     #+---"Check necessary folders exist"---+
     #+-------------------------------------+
+    #rip dest
+    if [ -d "$rip_flac" ]; then
+      log "rip destination already exists, using"
+    else
+      log_deb "rip destination doesn't exist, creating"
+      mkdir -p $rip_flac
+      if [[ $? -ne 1 ]]; then
+        if [ -d "$rip_flac" ]; then
+          log "rip destination created successfully at $rip_flac"
+        fi
+      else
+        log_err "flac music destination not able to be created, exiting"
+        exit 1
+      fi
+      chown $user_install:$group_install $rip_flac
+      if [[ $? -ne 1 ]]; then
+        log "successfully chmod'ed directory $rip_flac"
+      else
+        log_err "chmod'ing directory; $rip_flac failed, exiting"
+        exit 1
+      fi
+    fi
     #flac dest
     if [ -d "$FLAC_musicdest" ]; then
       log "flac music destination already exists, using"
