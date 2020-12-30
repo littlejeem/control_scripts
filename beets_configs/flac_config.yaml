@@ -1,6 +1,6 @@
 
 directory: /home/jlivin25/Music/Library/flacimports
-library: /home/jlivin25/.config/beets/flac/musiclibrary.blb
+library: /home/jlivin25/.config/ScriptSettings/beets/flac/musiclibrary.blb
 
 import:
     copy: no
@@ -15,7 +15,7 @@ art_filename: folder
 
 plugins: embedart chroma fetchart convert permissions
 
-pluginpath: /home/jlivin25/.config/beets/myplugins
+pluginpath: /home/jlivin25/.config/ScriptSettings/beets/myplugins
 
 threaded: yes
 
