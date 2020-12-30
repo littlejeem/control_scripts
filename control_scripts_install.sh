@@ -36,7 +36,7 @@ Drive_Detect () {
   log_deb $install_user
   log_deb $env_ammend
   drive_model=$(sudo udevadm info /dev/$drive_number | grep ID_MODEL=)
-  #drive_model=$(sudo udevadm info -a -n /dev/sr1 | grep ATTRS{model}==)
+  #drive_model=${sudo udevadm info -a -n /dev/sr1 | grep ATTRS{model}==}
   #ATTRS{model}=="BD-CMB UJ160    "
   drive_model=${drive_model:12}
   log_deb $drive_model
@@ -79,6 +79,116 @@ TimeoutStopSec=20
 
 [Install]
 WantedBy=multi-user.target
+EOF
+}
+#
+#
+abcde_conf_create () {
+cat > $HOME/.config/ScriptSettings/abcde.flac <<EOF
+LOWDISK=y
+INTERACTIVE=n
+CDDBMETHOD=cddb
+#
+#+-------------------+
+#+---Source Config---+
+#+-------------------+
+source "$HOME"/.config/ScriptSettings/sync_config.sh
+#----------------------------------------------------------------#
+GLYRC=glyrc
+GLYRCOPTS=
+
+IDENTIFY=identify
+IDENTIFYOPTS=
+
+DISPLAYCMD=display
+DISPLAYCMDOPTS="-resize 512x512 -title abcde_album_art"
+
+CONVERT=convert
+CONVERTOPTS=
+
+ALBUMARTALWAYSCONVERT="n"
+
+ALBUMARTFILE="folder.jpg"
+ALBUMARTTYPE="JPEG"
+#----------------------------------------------------------------#
+CDDBCOPYLOCAL="n"
+CDDBLOCALDIR=""$HOME"/.cddb"
+CDDBLOCALRECURSIVE="y"
+CDDBUSELOCAL="n"
+
+FLACENCODERSYNTAX=flac
+
+FLAC=flac
+
+FLACOPTS='--verify --best'
+
+OUTPUTTYPE="flac"
+
+CDROMREADERSYNTAX=cdparanoia
+
+CDPARANOIA=cdparanoia
+CDPARANOIAOPTS="--never-skip=40"
+
+CDDISCID=cd-discid
+
+#OUTPUTDIR="" #<---This is now pulled from .config file
+
+ACTIONS=read,encode,move,clean
+
+# Decide here how you want the tracks labelled for a standard 'single-artist',
+# multi-track encode and also for a multi-track, 'various-artist' encode:
+OUTPUTFORMAT='${ARTISTFILE}/${ALBUMFILE}/${TRACKNUM} - ${TRACKFILE} - ${ARTISTFILE}'
+VAOUTPUTFORMAT='Various/${ALBUMFILE}/${TRACKNUM} - ${TRACKFILE} - ${ARTISTFILE}'
+
+# single-track encode and also for a single-track 'various-artist' encode.
+# (Create a single-track encode with 'abcde -1' from the commandline.)
+ONETRACKOUTPUTFORMAT='${ARTISTFILE}-${ALBUMFILE}/${ALBUMFILE}'
+VAONETRACKOUTPUTFORMAT='Various/${ALBUMFILE}/${ALBUMFILE}'
+
+# This function takes out dots preceding the album name, and removes a grab
+# bag of illegal characters. It allows spaces, if you do not wish spaces add
+# in -e 's/ /_/g' after the first sed command.
+mungefilename ()
+{
+  echo "$@" | sed -e 's/^\.*//' | tr -d ":><|*/\"'?[:cntrl:]"
+}
+
+# What extra options?
+MAXPROCS=6                              # Run a few encoders simultaneously
+PADTRACKS=y                             # Makes tracks 01 02 not 1 2
+EXTRAVERBOSE=2                          # Useful for debugging
+COMMENT='abcde version 2.7.2'           # Place a comment...
+EJECTCD=y                               # Please eject cd when finished :-)
+
+post_encode ()
+{
+ARTISTFILE="$(mungefilename "$TRACKARTIST")"
+ALBUMFILE="$(mungefilename "$DALBUM")"
+GENRE="$(mungegenre "$GENRE")"
+YEAR=${CDYEAR:-$CDYEAR}
+
+if [ "$VARIOUSARTISTS" = "y" ] ; then
+FINDPATH="$(eval echo "$VAOUTPUTFORMAT")"
+else
+FINDPATH="$(eval echo "$OUTPUTFORMAT")"
+fi
+
+FINALDIR="$(dirname "$OUTPUTDIR")"
+FINALDIR1="$(dirname "$OUTPUTDIR")"
+C_CMD=(chown -R "$install_user":"$install_user" "$FINALDIR")
+C_CMD1=(chmod -R 777 "$FINALDIR")
+#echo "${C_CMD[@]}" >> tmp2.log
+"${C_CMD[@]}"
+"${C_CMD1[@]}"
+cd "$FINALDIR"
+
+if [ "$OUTPUTTYPE" = "flac" ] ; then
+vecho "Preparing to embed the album art..." >&2
+else
+vecho "Not embedding album art, you need flac output.." >&2
+return 1
+fi
+}
 EOF
 }
 #
@@ -278,16 +388,16 @@ if [ -d "/home/"$install_user"/.config" ]; then
     fi
     #alac dest
     if [ -d "$M4A_musicdest" ]; then
-      log "flac music destination already exists, using"
+      log "M4A music destination already exists, using"
     else
-      log_deb "flac music destination doesn't exist, creating"
+      log_deb "M4A music destination doesn't exist, creating"
       mkdir -p $M4A_musicdest
       if [[ $? -ne 1 ]]; then
         if [ -d "$M4A_musicdest" ]; then
-          log "flac music destination created successfully at $M4A_musicdest"
+          log "M4A music destination created successfully at $M4A_musicdest"
         fi
       else
-        log_err "flac music destination not able to be created, exiting"
+        log_err "M4A music destination not able to be created, exiting"
         exit 1
       fi
       chown -R $user_install:$group_install $M4A_musicdest
@@ -298,8 +408,34 @@ if [ -d "/home/"$install_user"/.config" ]; then
         exit 1
       fi
     fi
+  #beets configs
+  if [ -d "$beets_flac_path" ]; then #<----make this an AND comparison??
+    log "beets config folder exists, using"
   else
-    log_err "No existing sync_config file found, error?"
+    log_deb "beets config folder(s) doen't exist, creating"
+    mkdir -p $beets_flac_path
+    mkdir -p $beets_alac_path
+    mkdir -p $beets_upload_path
+    if [[ $? -ne 1 ]]; then
+      if [ -d "$beets_flac_path" ]; then
+        log "beets config folder(s) created successfully at $beets_flac_path, $beets_alac_path, $beets_upload_path"
+      fi
+    else
+      log_err "beets config folder(s) not able to be created, exiting"
+      exit 1
+    fi
+    chown -R $user_install:$group_install $beets_flac_path
+    chown -R $user_install:$group_install $beets_alac_path
+    chown -R $user_install:$group_install $beets_upload_path
+    if [[ $? -ne 1 ]]; then
+      log "successfully chmod'ed directory $beets_flac_path, $beets_alac_path, $beets_upload_path"
+    else
+      log_err "chmod'ing beets config folder(s) failed, exiting"
+      exit 1
+    fi
+  fi
+  else
+  log_err "No existing sync_config file found, error?"
   fi
 else
   log_deb "No existing .config folder located at /home/$install_user/.config, creating..."
