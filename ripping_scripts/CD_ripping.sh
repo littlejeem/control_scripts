@@ -27,7 +27,7 @@ if [[ -z "${INVOCATION_ID+x}" ]]; then
     exit 1
   else
     echo "INVOCATION_ID is set as: $INVOCATION_ID"
-    
+    echo "Already running with root privaleges"
   fi
 fi
 #
@@ -96,7 +96,7 @@ PATH=/sbin:/bin:/usr/bin:/home/"$install_user":/home/"$install_user"/.local/bin:
 #+---Define Functions---+
 #+----------------------+
 ripcd_flac () {
-  abcde -j `getconf _NPROCESSORS_ONLN` -N -c /home/"$install_user"/bin/control_scripts/abcde_configs/abcde_flac.conf -d /dev/"$drive_install"
+  abcde -j `getconf _NPROCESSORS_ONLN` -N -c /home/"$install_user"/bin/.config/ScriptSettings/abcde_flac.conf -d /dev/"$drive_install"
 }
 #
 #
