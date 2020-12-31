@@ -9,7 +9,7 @@ Group=jlivin25
 
 [Service]
 Type=oneshot
-ExecStart=/home/jlivin25/bin/control_scripts/ripping_scripts/cd_ripping.sh
+ExecStart=/home/jlivin25/bin/control_scripts/ripping_scripts/CD_ripping.sh -u jlivin25 -d sr1
 
 [Install]
 WantedBy=multi-user.target
