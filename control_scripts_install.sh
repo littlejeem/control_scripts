@@ -84,7 +84,7 @@ EOF
 #
 #
 abcde_conf_create () {
-cat > "$HOME"/.config/ScriptSettings/abcde.flac << 'EOF'
+cat > /home/"$install_user"/.config/ScriptSettings/abcde_flac.conf << 'EOF'
 LOWDISK=y
 INTERACTIVE=n
 CDDBMETHOD=cddb
@@ -191,6 +191,19 @@ return 1
 fi
 }
 EOF
+if [[ $? -ne 1 ]]; then
+  log "abcde_flac.conf created successfully at /home/"$install_user"/.config/ScriptSettings/"
+else
+  log_err "abcde_flac.conf not able to be created, exiting"
+  exit 1
+fi
+chown $install_user:$install_user /home/"$install_user"/.config/ScriptSettings/abcde_flac.conf
+if [[ $? -ne 1 ]]; then
+  log "successfully chown'd /home/"$install_user"/.config/ScriptSettings/abcde_flac.conf"
+else
+  log_err "chown'ing /home/"$install_user"/.config/ScriptSettings/abcde_flac.conf failed, exiting"
+  exit 1
+fi
 }
 #
 #
