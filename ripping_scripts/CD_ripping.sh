@@ -109,10 +109,29 @@ log "Script Started"
 log "Stage 1 - FLAC Ripping Started"
 cd $rip_flac
 ripcd_flac
+if [[ $? -ne 1 ]]; then
+  log "Successfully ripped cd completed with no errors"
+else
+  log_err "ripd_flac function failed with an error, check logs. cd NOT ripped"
+  exit 1
+fi
 log "Stage 2 - FLAC Ripping Completed"
 log "Stage 3 - Calling MusicSync to process files"
-sudo -u $install_user /home/"$install_user"/bin/sync_scripts/MusicSync.sh # <----------SWITCH TO VARIABLE IN CONFIG?
+sudo -u $install_user /home/"$install_user"/bin/sync_scripts/MusicSync.sh # <----------SWITCH TO VARIABLE IN CONFIG?...as in ON, OFF?
+if [[ $? -ne 1 ]]; then
+  log "MusicSync completed with no errors"
+else
+  log_err "MusicSync failed with an error, check logs"
+  exit 1
+fi
+log "Stage 4 - Ejecting CD"
 eject /dev/$drive_install
-log "Stage 4 - Complete - CD Ejected, End of Script"
+if [[ $? -ne 1 ]]; then
+  log "Ejected drive successfully"
+else
+  log_err "Drive failed to eject, check logs. Rest of script completed"
+  exit 1
+fi
+
 #
 exit 0
