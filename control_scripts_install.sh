@@ -375,7 +375,7 @@ if [ -d "/home/"$install_user"/.config" ]; then
       log "flac music destination already exists, using"
     else
       log_deb "flac music destination doesn't exist, creating"
-      mkdir -p $FLAC_musicdest
+      sudo -u $install_user mkdir -p $FLAC_musicdest
       if [[ $? -ne 1 ]]; then
         if [ -d "$FLAC_musicdest" ]; then
           log "flac music destination created successfully at $FLAC_musicdest"
