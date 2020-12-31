@@ -427,9 +427,9 @@ if [ -d "/home/"$install_user"/.config" ]; then
     log "beets config folder exists, using"
   else
     log_deb "beets config folder(s) doen't exist, creating"
-    mkdir -p $beets_flac_path
-    mkdir -p $beets_alac_path
-    mkdir -p $beets_upload_path
+    sudo -u $install_user mkdir -p $beets_flac_path
+    sudo -u $install_user mkdir -p $beets_alac_path
+    sudo -u $install_user mkdir -p $beets_upload_path
     if [[ $? -ne 1 ]]; then
       if [ -d "$beets_flac_path" ]; then
         log "beets config folder(s) created successfully at $beets_flac_path, $beets_alac_path, $beets_upload_path"
@@ -438,18 +438,18 @@ if [ -d "/home/"$install_user"/.config" ]; then
       log_err "beets config folder(s) not able to be created, exiting"
       exit 1
     fi
-    chown -R $user_install:$group_install $beets_flac_path
-    chown -R $user_install:$group_install $beets_alac_path
-    chown -R $user_install:$group_install $beets_upload_path
-    if [[ $? -ne 1 ]]; then
-      log "successfully chmod'ed directory $beets_flac_path, $beets_alac_path, $beets_upload_path"
-    else
-      log_err "chmod'ing beets config folder(s) failed, exiting"
-      exit 1
-    fi
+#    chown -R $user_install:$group_install $beets_flac_path
+#    chown -R $user_install:$group_install $beets_alac_path
+#    chown -R $user_install:$group_install $beets_upload_path
+#    if [[ $? -ne 1 ]]; then
+#      log "successfully chmod'ed directory $beets_flac_path, $beets_alac_path, $beets_upload_path"
+#    else
+#      log_err "chmod'ing beets config folder(s) failed, exiting"
+#      exit 1
+#    fi
   fi
   else
-  log_err "No existing sync_config file found, error?"
+    log_err "No existing sync_config file found, error?"
   fi
 else
   log_deb "No existing .config folder located at /home/$install_user/.config, creating..."
@@ -463,6 +463,7 @@ else
     exit 1
   fi
 fi
+abcde_conf_create
 #
 #
 log "control scripts install script completed"
