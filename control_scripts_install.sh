@@ -132,7 +132,6 @@ CDPARANOIAOPTS="--never-skip=40"
 CDDISCID=cd-discid
 
 OUTPUTDIR=$HOME/Music/Rips
-#<---This is now pulled from .config file
 
 ACTIONS=read,encode,move,clean
 
