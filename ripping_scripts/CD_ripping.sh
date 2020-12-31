@@ -26,9 +26,11 @@ if [[ -z "${INVOCATION_ID+x}" ]]; then
     echo "sudo $0 $*"
     exit 1
   else
-    echo "INVOCATION_ID is set as: $INVOCATION_ID"
-    echo "Already running with root privaleges"
+    echo "already running with root privaleges"
   fi
+else
+  echo "INVOCATION_ID is set as: $INVOCATION_ID"
+  echo "Already running with root privaleges"
 fi
 #
 #
@@ -108,7 +110,7 @@ log "Stage 1 - FLAC Ripping Started"
 cd $rip_flac
 ripcd_flac
 log "Stage 2 - FLAC Ripping Completed"
-log "Stage 3 - Syncing Rip to Library"
+log "Stage 3 - Calling MusicSync to process files"
 sudo -u $install_user /home/"$install_user"/bin/sync_scripts/MusicSync.sh # <----------SWITCH TO VARIABLE IN CONFIG?
 eject /dev/$drive_install
 log "Stage 4 - Complete - CD Ejected, End of Script"
