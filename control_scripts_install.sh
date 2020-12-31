@@ -361,20 +361,13 @@ if [ -d "/home/"$install_user"/.config" ]; then
       log "rip destination already exists, using"
     else
       log_deb "rip destination doesn't exist, creating"
-      mkdir -p $rip_flac
+      sudo -u $install_user mkdir -p $rip_flac
       if [[ $? -ne 1 ]]; then
         if [ -d "$rip_flac" ]; then
           log "rip destination created successfully at $rip_flac"
         fi
       else
         log_err "flac music destination not able to be created, exiting"
-        exit 1
-      fi
-      chown $user_install:$group_install $rip_flac
-      if [[ $? -ne 1 ]]; then
-        log "successfully chmod'ed directory $rip_flac"
-      else
-        log_err "chmod'ing directory; $rip_flac failed, exiting"
         exit 1
       fi
     fi
@@ -392,7 +385,8 @@ if [ -d "/home/"$install_user"/.config" ]; then
         log_err "flac music destination not able to be created, exiting"
         exit 1
       fi
-      chown -R $user_install:$group_install $FLAC_musicdest
+      cd $FLAC_musicdest
+      chown -R $user_install:$group_install ../$FLAC_musicdest
       if [[ $? -ne 1 ]]; then
         log "successfully chmod'ed directory $FLAC_musicdest"
       else
@@ -405,20 +399,13 @@ if [ -d "/home/"$install_user"/.config" ]; then
       log "M4A music destination already exists, using"
     else
       log_deb "M4A music destination doesn't exist, creating"
-      mkdir -p $M4A_musicdest
+      sudo -u $install_user mkdir -p $M4A_musicdest
       if [[ $? -ne 1 ]]; then
         if [ -d "$M4A_musicdest" ]; then
           log "M4A music destination created successfully at $M4A_musicdest"
         fi
       else
         log_err "M4A music destination not able to be created, exiting"
-        exit 1
-      fi
-      chown -R $user_install:$group_install $M4A_musicdest
-      if [[ $? -ne 1 ]]; then
-        log "successfully chmod'ed directory $M4A_musicdest"
-      else
-        log_err "chmod'ing directory; $M4A_musicdest failed, exiting"
         exit 1
       fi
     fi
