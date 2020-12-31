@@ -74,7 +74,7 @@ Restart=always
 RestartSec=5
 Type=simple
 User=$install_user
-ExecStart=/home/$install_user/bin/control_scripts/ripping_scripts/${env_ammend}_ripping.sh
+ExecStart=/home/$install_user/bin/control_scripts/ripping_scripts/${env_ammend}_ripping.sh $install_user /dev/$drive_number
 TimeoutStopSec=20
 
 [Install]
