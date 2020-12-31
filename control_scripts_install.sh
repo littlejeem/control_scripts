@@ -366,7 +366,7 @@ if [ -d "/home/"$install_user"/.config" ]; then
           log "rip destination created successfully at $rip_flac"
         fi
       else
-        log_err "flac music destination not able to be created, exiting"
+        log_err "rip destination not able to be created, exiting"
         exit 1
       fi
     fi
@@ -384,8 +384,7 @@ if [ -d "/home/"$install_user"/.config" ]; then
         log_err "flac music destination not able to be created, exiting"
         exit 1
       fi
-      cd $FLAC_musicdest
-      chown -R $user_install:$group_install ../$FLAC_musicdest
+      chown -R $user_install:$group_install $FLAC_musicdest
       if [[ $? -ne 1 ]]; then
         log "successfully chmod'ed directory $FLAC_musicdest"
       else
