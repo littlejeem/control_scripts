@@ -96,7 +96,7 @@ PATH=/sbin:/bin:/usr/bin:/home/"$install_user":/home/"$install_user"/.local/bin:
 #+---Define Functions---+
 #+----------------------+
 ripcd_flac () {
-  abcde -j `getconf _NPROCESSORS_ONLN` -N -c /home/"$install_user"/bin/.config/ScriptSettings/abcde_flac.conf -d /dev/"$drive_install"
+  abcde -j `getconf _NPROCESSORS_ONLN` -N -c /home/"$install_user"/.config/ScriptSettings/abcde_flac.conf -d /dev/"$drive_install"
 }
 #
 #

@@ -84,7 +84,7 @@ EOF
 #
 #
 abcde_conf_create () {
-cat > $HOME/.config/ScriptSettings/abcde.flac <<EOF
+cat > "$HOME"/.config/ScriptSettings/abcde.flac << 'EOF'
 LOWDISK=y
 INTERACTIVE=n
 CDDBMETHOD=cddb
@@ -112,7 +112,7 @@ ALBUMARTFILE="folder.jpg"
 ALBUMARTTYPE="JPEG"
 #----------------------------------------------------------------#
 CDDBCOPYLOCAL="n"
-CDDBLOCALDIR=""$HOME"/.cddb"
+CDDBLOCALDIR="$HOME/.cddb"
 CDDBLOCALRECURSIVE="y"
 CDDBUSELOCAL="n"
 
@@ -131,7 +131,8 @@ CDPARANOIAOPTS="--never-skip=40"
 
 CDDISCID=cd-discid
 
-#OUTPUTDIR="" #<---This is now pulled from .config file
+OUTPUTDIR=$HOME/Music/Rips
+#<---This is now pulled from .config file
 
 ACTIONS=read,encode,move,clean
 
@@ -158,7 +159,7 @@ MAXPROCS=6                              # Run a few encoders simultaneously
 PADTRACKS=y                             # Makes tracks 01 02 not 1 2
 EXTRAVERBOSE=2                          # Useful for debugging
 COMMENT='abcde version 2.7.2'           # Place a comment...
-EJECTCD=y                               # Please eject cd when finished :-)
+EJECTCD=n                              # Please eject cd when finished :-)
 
 post_encode ()
 {
@@ -175,7 +176,7 @@ fi
 
 FINALDIR="$(dirname "$OUTPUTDIR")"
 FINALDIR1="$(dirname "$OUTPUTDIR")"
-C_CMD=(chown -R "$install_user":"$install_user" "$FINALDIR")
+C_CMD=(chown -R ${install_user}:${install_user} "$FINALDIR")
 C_CMD1=(chmod -R 777 "$FINALDIR")
 #echo "${C_CMD[@]}" >> tmp2.log
 "${C_CMD[@]}"
