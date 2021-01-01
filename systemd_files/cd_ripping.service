@@ -6,7 +6,7 @@ Description=Auto CD ripper
 
 [Service]
 Type=simple
-SyslogIdentifier=${env_ammend}_ripping_service
+SyslogIdentifier=CD_ripping_service
 User=jlivin25
 ExecStart=/home/jlivin25/bin/control_scripts/ripping_scripts/CD_ripping.sh -u jlivin25 -d sr1
 TimeoutStopSec=20
