@@ -4,12 +4,12 @@
 [Unit]
 Description=Auto CD ripper
 
-User=jlivin25
-Group=jlivin25
-
 [Service]
-Type=oneshot
+Type=simple
+SyslogIdentifier=${env_ammend}_ripping_service
+User=jlivin25
 ExecStart=/home/jlivin25/bin/control_scripts/ripping_scripts/CD_ripping.sh -u jlivin25 -d sr1
+TimeoutStopSec=20
 
 [Install]
 WantedBy=multi-user.target
