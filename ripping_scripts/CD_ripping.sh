@@ -81,17 +81,17 @@ else
 fi
 #
 #
-#+-------------------+
-#+---Source helper---+
-#+-------------------+
-source $HOME/bin/standalone_scripts/helper_script.sh
-source $HOME/.config/ScriptSettings/sync_config.sh
-#
-#
 #+---------------------+
 #+---"Set Variables"---+
 #+---------------------+
 PATH=/sbin:/bin:/usr/bin:/home/"$install_user":/home/"$install_user"/.local/bin:/home/"$install_user"/bin
+#
+#
+#+-------------------+
+#+---Source helper---+
+#+-------------------+
+source /home/$install_user/bin/standalone_scripts/helper_script.sh
+source /home/$install_user/.config/ScriptSettings/sync_config.sh
 #
 #
 #+----------------------+
