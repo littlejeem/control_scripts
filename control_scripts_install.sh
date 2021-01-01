@@ -40,7 +40,7 @@ Drive_Detect () {
   #ATTRS{model}=="BD-CMB UJ160    "
   drive_model=${drive_model:12}
   log_deb $drive_model
-  udev_insert=$(echo -e "ACTION==\"change\",KERNEL==\""$drive_number"\",SUBSYSTEM==\"block\",ATTRS{model}==\""$drive_model"\",ENV{ID_CDROM_MEDIA_"$env_ammend"}==\"1\",ENV{HOME}=\"/home/"$install_user"\",RUN+=\"/bin/systemctl start "${env_ammend}_ripping.sh"\"")
+  udev_insert=$(echo -e "ACTION==\"change\",KERNEL==\""$drive_number"\",SUBSYSTEM==\"block\",ATTRS{model}==\""$drive_model"\",ENV{ID_CDROM_MEDIA_"$env_ammend"}==\"1\",ENV{HOME}=\"/home/"$install_user"\",RUN+=\"/bin/systemctl start "${env_ammend}_ripping.service"\"")
   log_deb $udev_insert
   echo $udev_insert > $udev_rule
   #modify SOURCE file permissions
@@ -70,8 +70,6 @@ Description=$env_ammend Ripping Service
 
 [Service]
 SyslogIdentifier=${env_ammend}_ripping_service
-Restart=always
-RestartSec=5
 Type=simple
 User=$install_user
 ExecStart=/home/$install_user/bin/control_scripts/ripping_scripts/${env_ammend}_ripping.sh -u $install_user -d $drive_number
