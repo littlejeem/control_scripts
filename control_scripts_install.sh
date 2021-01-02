@@ -35,12 +35,12 @@ Drive_Detect () {
   log_deb $drive_number
   log_deb $install_user
   log_deb $env_ammend
-  drive_model=$(sudo udevadm info /dev/$drive_number | grep ID_MODEL=)
-  #drive_model=${sudo udevadm info -a -n /dev/sr1 | grep ATTRS{model}==}
+  #drive_model=$(sudo udevadm info /dev/$drive_number | grep ID_MODEL=)
+  drive_model=$(sudo udevadm info -a -n /dev/sr1 | grep ATTRS{model}==)
   #ATTRS{model}=="BD-CMB UJ160    "
   drive_model=${drive_model:12}
   log_deb $drive_model
-  udev_insert=$(echo -e "ACTION==\"change\",KERNEL==\""$drive_number"\",SUBSYSTEM==\"block\",ATTRS{model}==\""$drive_model"\",ENV{ID_CDROM_MEDIA_"$env_ammend"}==\"1\",ENV{HOME}=\"/home/"$install_user"\",RUN+=\"/bin/systemctl start "${env_ammend}_ripping.service"\"")
+  udev_insert='ACTION=="change",KERNEL=="'"$drive_number"'",SUBSYSTEM=="block",'"$drive_model"',ENV{ID_CDROM_MEDIA_'"$env_ammend"'}=="1",ENV{HOME}="/home/'"$install_user"'",RUN+="/bin/systemctl start '"${env_ammend}"'_ripping.service"'
   log_deb $udev_insert
   echo $udev_insert > $udev_rule
   #modify SOURCE file permissions
