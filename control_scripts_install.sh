@@ -36,7 +36,7 @@ Drive_Detect () {
   log_deb "$install_user"
   log_deb "$env_ammend"
   #drive_model=$(sudo udevadm info /dev/$drive_number | grep ID_MODEL=)
-  drive_model=udevadm info -a -n /dev/sr1 | grep -o 'ATTRS{model}=="[^"]*"'
+  drive_model=$(udevadm info -a -n /dev/sr1 | grep -o 'ATTRS{model}=="[^"]*"')
   #ATTRS{model}=="BD-CMB UJ160    "
   log_deb "$drive_model"
   udev_insert='ACTION=="change",KERNEL=="'"$drive_number"'",SUBSYSTEM=="block",'"$drive_model"',ENV{ID_CDROM_MEDIA_'"$env_ammend"'}=="1",ENV{HOME}="/home/'"$install_user"'",RUN+="/bin/systemctl start '"${env_ammend}"'_ripping.service"'
