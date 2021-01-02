@@ -38,7 +38,7 @@ Drive_Detect () {
   #drive_model=$(sudo udevadm info /dev/$drive_number | grep ID_MODEL=)
   drive_model=udevadm info -a -n /dev/sr1 | grep -o 'ATTRS{model}=="[^"]*"'
   #ATTRS{model}=="BD-CMB UJ160    "
-  log_deb $drive_model
+  log_deb "$drive_model"
   udev_insert='ACTION=="change",KERNEL=="'"$drive_number"'",SUBSYSTEM=="block",'"$drive_model"',ENV{ID_CDROM_MEDIA_'"$env_ammend"'}=="1",ENV{HOME}="/home/'"$install_user"'",RUN+="/bin/systemctl start '"${env_ammend}"'_ripping.service"'
   log_deb "$udev_insert"
   echo "$udev_insert" > $udev_rule
@@ -241,18 +241,6 @@ else
 fi
 #
 #
-#+----------------------+
-#+---"Check for Root"---+
-#+----------------------+
-log_deb env
-log "INVOCATION_ID is set as: $INVOCATION_ID"
-log "EUID is set as: $EUID"
-if [[ $EUID -ne 0 ]]; then
-  echo "This script must be run as root"
-  exit 1
-fi
-#
-#
 #+---------------------------+
 #+---"Source helper files"---+
 #+---------------------------+
@@ -261,6 +249,18 @@ if [ -f "/home/"$install_user"/bin/standalone_scripts/helper_script.sh" ]; then
   source /home/"$install_user"/bin/standalone_scripts/helper_script.sh
 else
   echo "$(date +%b"  "%-d" "%T)" " "ERROR: helper file not found exiting
+  exit 1
+fi
+#
+#
+#+----------------------+
+#+---"Check for Root"---+
+#+----------------------+
+log_deb env
+log "INVOCATION_ID is set as: $INVOCATION_ID"
+log "EUID is set as: $EUID"
+if [[ $EUID -ne 0 ]]; then
+  echo "This script must be run as root"
   exit 1
 fi
 #
