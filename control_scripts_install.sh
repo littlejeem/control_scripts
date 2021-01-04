@@ -36,7 +36,7 @@ Drive_Detect () {
   log_deb "$install_user"
   log_deb "$env_ammend"
   #drive_model=$(sudo udevadm info /dev/$drive_number | grep ID_MODEL=)
-  drive_model=$(udevadm info -a -n /dev/sr1 | grep -o 'ATTRS{model}=="[^"]*"')
+  drive_model=$(udevadm info -a -n /dev/$drive_number | grep -o 'ATTRS{model}=="[^"]*"')
   #ATTRS{model}=="BD-CMB UJ160    "
   log_deb "$drive_model"
   udev_insert='ACTION=="change",KERNEL=="'"$drive_number"'",SUBSYSTEM=="block",'"$drive_model"',ENV{ID_CDROM_MEDIA_'"$env_ammend"'}=="1",ENV{HOME}="/home/'"$install_user"'",RUN+="/bin/systemctl start '"${env_ammend}"'_ripping.service"'
@@ -65,7 +65,7 @@ systemd_service_create () {
 cat > /etc/systemd/system/${env_ammend}_ripping.service <<EOF
 
 [Unit]
-Description=$env_ammend Ripping Service
+Description=${env_ammend} Ripping Service
 
 [Service]
 SyslogIdentifier=${env_ammend}_ripping_service
@@ -89,7 +89,7 @@ CDDBMETHOD=cddb
 #+-------------------+
 #+---Source Config---+
 #+-------------------+
-source "$HOME"/.config/ScriptSettings/sync_config.sh
+#source "$HOME"/.config/ScriptSettings/sync_config.sh
 #----------------------------------------------------------------#
 GLYRC=glyrc
 GLYRCOPTS=
@@ -128,7 +128,8 @@ CDPARANOIAOPTS="--never-skip=40"
 
 CDDISCID=cd-discid
 
-OUTPUTDIR=$HOME/Music/Rips
+#OUTPUTDIR=$HOME/Music/Rips
+OUTPUTDIR=${rip_flac}
 
 ACTIONS=read,encode,move,clean
 
