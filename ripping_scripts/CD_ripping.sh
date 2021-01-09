@@ -102,6 +102,21 @@ ripcd_flac () {
 }
 #
 #
+#+----------------------+
+#+---Set Up Variables---+
+#+----------------------+
+timestamp=$(date +%a%R)
+export $timestamp #<---Export so that abcde appends to folder name so that each 'unknown artist' has a time attached
+log_deb "exported timestamp as $timestamp"
+#
+export $install_user #<---Used when 'munging' names, used in abcde.conf
+export $install_group #<---Used when 'munging' names, used in abcde.conf
+#
+OUTPUTDIR=$(rip_flac) #<---Export so that abcde can use in its conf
+export $OUTPUTDIR
+log_deb "exported $rip_flac to OUTPUTDIR $OUTPUTDIR"
+#
+#
 #+------------------+
 #+---Start Script---+
 #+------------------+
