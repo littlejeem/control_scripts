@@ -82,15 +82,13 @@ EOF
 #
 abcde_conf_create () {
 cat > /home/"$install_user"/.config/ScriptSettings/abcde_flac.conf << 'EOF'
-LOWDISK=y
+LOWDISK=n
 INTERACTIVE=n
 CDDBMETHOD=cddb
 #
 #+-------------------+
 #+---Source Config---+
 #+-------------------+
-#source "$HOME"/.config/ScriptSettings/sync_config.sh
-#----------------------------------------------------------------#
 GLYRC=glyrc
 GLYRCOPTS=
 
@@ -128,14 +126,13 @@ CDPARANOIAOPTS="--never-skip=40"
 
 CDDISCID=cd-discid
 
-#OUTPUTDIR=$HOME/Music/Rips
-OUTPUTDIR=${rip_flac}
+#OUTPUTDIR= #<--- Now pulled from CD_Ripping.sh
 
 ACTIONS=read,encode,move,clean
 
 # Decide here how you want the tracks labelled for a standard 'single-artist',
 # multi-track encode and also for a multi-track, 'various-artist' encode:
-OUTPUTFORMAT='${ARTISTFILE}/${ALBUMFILE}/${TRACKNUM} - ${TRACKFILE} - ${ARTISTFILE}'
+OUTPUTFORMAT='${ARTISTFILE} - ${timestamp}/${ALBUMFILE}/${TRACKNUM} - ${TRACKFILE} - ${ARTISTFILE}'
 VAOUTPUTFORMAT='Various/${ALBUMFILE}/${TRACKNUM} - ${TRACKFILE} - ${ARTISTFILE}'
 
 # single-track encode and also for a single-track 'various-artist' encode.
@@ -173,7 +170,7 @@ fi
 
 FINALDIR="$(dirname "$OUTPUTDIR")"
 FINALDIR1="$(dirname "$OUTPUTDIR")"
-C_CMD=(chown -R ${install_user}:${install_user} "$FINALDIR")
+C_CMD=(chown -R ${install_user}:${install_group} "$FINALDIR")
 C_CMD1=(chmod -R 777 "$FINALDIR")
 #echo "${C_CMD[@]}" >> tmp2.log
 "${C_CMD[@]}"
