@@ -132,7 +132,7 @@ ACTIONS=read,encode,move,clean
 
 # Decide here how you want the tracks labelled for a standard 'single-artist',
 # multi-track encode and also for a multi-track, 'various-artist' encode:
-OUTPUTFORMAT='${ARTISTFILE} - ${timestamp}/${ALBUMFILE}/${TRACKNUM} - ${TRACKFILE} - ${ARTISTFILE}'
+OUTPUTFORMAT='${ARTISTFILE}/${ALBUMFILE}/${TRACKNUM} - ${TRACKFILE} - ${ARTISTFILE}'
 VAOUTPUTFORMAT='Various/${ALBUMFILE}/${TRACKNUM} - ${TRACKFILE} - ${ARTISTFILE}'
 
 # single-track encode and also for a single-track 'various-artist' encode.
