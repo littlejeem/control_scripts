@@ -10,7 +10,9 @@ import:
     quiet_fallback: skip
     timid: no
     log: beetslog.txt
-ignore: .AppleDouble ._* *~ .DS_Store
+
+ignore: [".AppleDouble", "._*", "*~", ".DS_Store", "Unknown Artist-*"]
+
 art_filename: folder
 
 plugins: embedart chroma fetchart convert permissions gmusic
