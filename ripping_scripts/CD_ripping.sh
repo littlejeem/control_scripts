@@ -41,8 +41,10 @@ function helpFunction () {
    echo ""
    echo "Usage: $0 -u ####"
    echo "Usage: $0"
-   echo -e "\t Running the script with no flags causes default behaviour"
-   echo -e "\t-u Use this flag to specify a user to install jackett under"
+   echo -e "\t Running the script with no flags causes default behaviour, user is me, drive is sr0"
+   echo -e "\t Set the flags at the end of the exec line in /etc/systemd/system/cd_ripping.service"
+   echo -e "\t-u Use this flag to run rip under, eg. -u foobaruser"
+   echo -e "\t-d Use this flag to choose the drive to rip from, default is sr0 when not set. eg. -d sr1"
    exit 1 # Exit script after printing help
 }
 #
@@ -107,14 +109,13 @@ ripcd_flac () {
 #+----------------------+
 timestamp=$(date +%a%R)
 export "$timestamp" #<---Export so that abcde appends to folder name so that each 'unknown artist' has a time attached
-
 log_deb "exported timestamp as $timestamp"
-export $install_user #<---Used when 'munging' names, used in abcde.conf
-export $install_group #<---Used when 'munging' names, used in abcde.conf
+export "$install_user" #<---Used when 'munging' names, used in abcde.conf
+export "$install_group" #<---Used when 'munging' names, used in abcde.conf
 #
 OUTPUTDIR=$(echo $rip_flac) #<---Export so that abcde can use in its conf
 export $OUTPUTDIR
-log_deb "exported $rip_flac to OUTPUTDIR $OUTPUTDIR"
+log_deb "exported $rip_flac to OUTPUTDIR $OUTPUTDIR for abcde use"
 #
 #
 #+------------------+
@@ -147,6 +148,5 @@ else
   log_err "Drive failed to eject, check logs. Rest of script completed"
   exit 1
 fi
-
 #
 exit 0
