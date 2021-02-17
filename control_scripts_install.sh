@@ -26,37 +26,37 @@ helpFunction () {
 Drive_Detect () {
   cd /tmp
   if [[ $? -ne 0 ]]; then
-    log_err "changing to /tmp failed, most likely this is a missing directory"
+    eerror "changing to /tmp failed, most likely this is a missing directory"
     exit 1
   else
-    log_deb "changed to /tmp successfully"
+    edebug "changed to /tmp successfully"
   fi
-  log_deb "$udev_rule"
-  log_deb "$drive_number"
-  log_deb "$install_user"
-  log_deb "$env_ammend"
+  edebug "$udev_rule"
+  edebug "$drive_number"
+  edebug "$install_user"
+  edebug "$env_ammend"
   #drive_model=$(sudo udevadm info /dev/$drive_number | grep ID_MODEL=)
   drive_model=$(udevadm info -a -n /dev/$drive_number | grep -o 'ATTRS{model}=="[^"]*"')
   #ATTRS{model}=="BD-CMB UJ160    "
-  log_deb "$drive_model"
+  edebug "$drive_model"
   udev_insert='ACTION=="change",KERNEL=="'"$drive_number"'",SUBSYSTEM=="block",'"$drive_model"',ENV{ID_CDROM_MEDIA_'"$env_ammend"'}=="1",ENV{HOME}="/home/'"$install_user"'",RUN+="/bin/systemctl start '"${env_ammend}"'_ripping.service"'
-  log_deb "$udev_insert"
+  edebug "$udev_insert"
   echo "$udev_insert" > $udev_rule
   #modify SOURCE file permissions
   chmod 644 $udev_rule
   if [[ $? -ne 0 ]]; then
-    log_err "changing mode of UDEV $udev_rule file failed"
+    eerror "changing mode of UDEV $udev_rule file failed"
     exit 1
   else
-    log "changing mode of UDEV $udev_rule file succeded"
+    enotify "changing mode of UDEV $udev_rule file succeded"
   fi
   #mv files into location
   mv $udev_rule $udev_loc
   if [[ $? -ne 0 ]]; then
-    log_err "moving UDEV rule $udev_rule file failed"
+    eerror "moving UDEV rule $udev_rule file failed"
     exit 1
   else
-    log "moving UDEV rule $udev_rule file succeded"
+    enotify "moving UDEV rule $udev_rule file succeded"
   fi
 }
 #
@@ -186,16 +186,16 @@ fi
 }
 EOF
 if [[ $? -ne 1 ]]; then
-  log "abcde_flac.conf created successfully at /home/"$install_user"/.config/ScriptSettings/"
+  enotify "abcde_flac.conf created successfully at /home/"$install_user"/.config/ScriptSettings/"
 else
-  log_err "abcde_flac.conf not able to be created, exiting"
+  eerror "abcde_flac.conf not able to be created, exiting"
   exit 1
 fi
 chown $install_user:$install_user /home/"$install_user"/.config/ScriptSettings/abcde_flac.conf
 if [[ $? -ne 1 ]]; then
-  log "successfully chown'd /home/"$install_user"/.config/ScriptSettings/abcde_flac.conf"
+  enotify "successfully chown'd /home/"$install_user"/.config/ScriptSettings/abcde_flac.conf"
 else
-  log_err "chown'ing /home/"$install_user"/.config/ScriptSettings/abcde_flac.conf failed, exiting"
+  eerror "chown'ing /home/"$install_user"/.config/ScriptSettings/abcde_flac.conf failed, exiting"
   exit 1
 fi
 }
@@ -254,9 +254,9 @@ fi
 #+----------------------+
 #+---"Check for Root"---+
 #+----------------------+
-log_deb env
-log "INVOCATION_ID is set as: $INVOCATION_ID"
-log "EUID is set as: $EUID"
+edebug env
+enotify "INVOCATION_ID is set as: $INVOCATION_ID"
+enotify "EUID is set as: $EUID"
 if [[ $EUID -ne 0 ]]; then
   echo "This script must be run as root"
   exit 1
@@ -266,7 +266,7 @@ fi
 #+-------------------------+
 #+---"Set up UDEV rules"---+ <---(symlink?)
 #+-------------------------+
-log "setting up UDEV rules & SYSTEMD services"
+enotify "setting up UDEV rules & SYSTEMD services"
 #CD
 udev_rule="82-AutoCDInsert.rules"
 env_ammend="CD" #ENV{ID_CDROM_MEDIA_CD}
@@ -283,24 +283,24 @@ env_ammend="BD" #ENV{ID_CDROM_MEDIA_BD}
 Drive_Detect
 systemd_service_create
 #
-log "created UDEV & SYSTEMD files"
+enotify "created UDEV & SYSTEMD files"
 #
 #reload udev rules
-log "reloading UDEV rules"
+enotify "reloading UDEV rules"
 udevadm control --reload
 if [[ $? -ne 0 ]]; then
-  log_err "Reloading UDEV rules failed"
+  eerror "Reloading UDEV rules failed"
   exit 1
 else
-  log "Reloading UDEV rules succeded"
+  enotify "Reloading UDEV rules succeded"
 fi
 #reload systemd services
 systemctl daemon-reload
 if [[ $? -ne 0 ]]; then
-  log_err "Reloading .service files failed"
+  eerror "Reloading .service files failed"
   exit 1
 else
-  log "Reloading .service files succeded"
+  enotify "Reloading .service files succeded"
 fi
 #
 #
@@ -309,17 +309,17 @@ fi
 #+-------------------------------+
 if ! command -v abcde &> /dev/null
 then
-  log_err "abcde could not be found, script won't function wihout it, attempting install"
+  eerror "abcde could not be found, script won't function wihout it, attempting install"
   apt update && apt install abcde -y
   if ! command -v abcde &> /dev/null
   then
-    log_err "abcde install failed, scripts won't function wihout it, exiting"
+    eerror "abcde install failed, scripts won't function wihout it, exiting"
     exit 1
   else
-    log "abcde now installed, continuing"
+    enotify "abcde now installed, continuing"
   fi
 else
-    log "abcde command located, continuing"
+    enotify "abcde command located, continuing"
 fi
 #
 #
@@ -328,123 +328,123 @@ fi
 #+--------------------------------+
 if ! command -v flac &> /dev/null
 then
-  log_err "FLAC could not be found, script won't function wihout it, attempting install"
+  eerror "FLAC could not be found, script won't function wihout it, attempting install"
   apt update && apt install flac -y
   if ! command -v flac &> /dev/null
   then
-    log_err "FLAC install failed, scripts won't function wihout it, exiting"
+    eerror "FLAC install failed, scripts won't function wihout it, exiting"
     exit 1
   else
-    log "FLAC now installed, continuing"
+    enotify "FLAC now installed, continuing"
   fi
 else
-    log "FLAC command located, continuing"
+    enotify "FLAC command located, continuing"
 fi
 #
 #
 if [ -d "/home/"$install_user"/.config" ]; then
-  log "Located .config folder, looking for existing sync_config.sh"
+  enotify "Located .config folder, looking for existing sync_config.sh"
   if [ -f "/home/"$install_user"/.config/ScriptSettings/sync_config.sh" ]; then
-    log "located existing sync_config file, using..."
+    enotify "located existing sync_config file, using..."
     source /home/"$install_user"/.config/ScriptSettings/sync_config.sh
     #+-------------------------------------+
     #+---"Check necessary folders exist"---+
     #+-------------------------------------+
     #rip dest
     if [ -d "$rip_flac" ]; then
-      log "rip destination already exists, using"
+      enotify "rip destination already exists, using"
     else
-      log_deb "rip destination doesn't exist, creating"
+      edebug "rip destination doesn't exist, creating"
       sudo -u $install_user mkdir -p $rip_flac
       if [[ $? -ne 1 ]]; then
         if [ -d "$rip_flac" ]; then
-          log "rip destination created successfully at $rip_flac"
+          enotify "rip destination created successfully at $rip_flac"
         fi
       else
-        log_err "rip destination not able to be created, exiting"
+        eerror "rip destination not able to be created, exiting"
         exit 1
       fi
     fi
     #flac dest
     if [ -d "$FLAC_musicdest" ]; then
-      log "flac music destination already exists, using"
+      enotify "flac music destination already exists, using"
     else
-      log_deb "flac music destination doesn't exist, creating"
+      edebug "flac music destination doesn't exist, creating"
       sudo -u $install_user mkdir -p $FLAC_musicdest
       if [[ $? -ne 1 ]]; then
         if [ -d "$FLAC_musicdest" ]; then
-          log "flac music destination created successfully at $FLAC_musicdest"
+          enotify "flac music destination created successfully at $FLAC_musicdest"
         fi
       else
-        log_err "flac music destination not able to be created, exiting"
+        eerror "flac music destination not able to be created, exiting"
         exit 1
       fi
       chown -R $user_install:$group_install $FLAC_musicdest
       if [[ $? -ne 1 ]]; then
-        log "successfully chmod'ed directory $FLAC_musicdest"
+        enotify "successfully chmod'ed directory $FLAC_musicdest"
       else
-        log_err "chmod'ing directory; $FLAC_musicdest failed, exiting"
+        eerror "chmod'ing directory; $FLAC_musicdest failed, exiting"
         exit 1
       fi
     fi
     #alac dest
     if [ -d "$M4A_musicdest" ]; then
-      log "M4A music destination already exists, using"
+      enotify "M4A music destination already exists, using"
     else
-      log_deb "M4A music destination doesn't exist, creating"
+      edebug "M4A music destination doesn't exist, creating"
       sudo -u $install_user mkdir -p $M4A_musicdest
       if [[ $? -ne 1 ]]; then
         if [ -d "$M4A_musicdest" ]; then
-          log "M4A music destination created successfully at $M4A_musicdest"
+          enotify "M4A music destination created successfully at $M4A_musicdest"
         fi
       else
-        log_err "M4A music destination not able to be created, exiting"
+        eerror "M4A music destination not able to be created, exiting"
         exit 1
       fi
     fi
   #beets configs
   if [ -d "$beets_flac_path" ]; then #<----make this an AND comparison??
-    log "beets config folder exists, using"
+    enotify "beets config folder exists, using"
   else
-    log_deb "beets config folder(s) doen't exist, creating"
+    edebug "beets config folder(s) doen't exist, creating"
     sudo -u $install_user mkdir -p $beets_flac_path
     sudo -u $install_user mkdir -p $beets_alac_path
     sudo -u $install_user mkdir -p $beets_upload_path
     if [[ $? -ne 1 ]]; then
       if [ -d "$beets_flac_path" ]; then
-        log "beets config folder(s) created successfully at $beets_flac_path, $beets_alac_path, $beets_upload_path"
+        enotify "beets config folder(s) created successfully at $beets_flac_path, $beets_alac_path, $beets_upload_path"
       fi
     else
-      log_err "beets config folder(s) not able to be created, exiting"
+      eerror "beets config folder(s) not able to be created, exiting"
       exit 1
     fi
 #    chown -R $user_install:$group_install $beets_flac_path
 #    chown -R $user_install:$group_install $beets_alac_path
 #    chown -R $user_install:$group_install $beets_upload_path
 #    if [[ $? -ne 1 ]]; then
-#      log "successfully chmod'ed directory $beets_flac_path, $beets_alac_path, $beets_upload_path"
+#      enotify "successfully chmod'ed directory $beets_flac_path, $beets_alac_path, $beets_upload_path"
 #    else
-#      log_err "chmod'ing beets config folder(s) failed, exiting"
+#      eerror "chmod'ing beets config folder(s) failed, exiting"
 #      exit 1
 #    fi
   fi
   else
-    log_err "No existing sync_config file found, error?"
+    eerror "No existing sync_config file found, error?"
   fi
 else
-  log_deb "No existing .config folder located at /home/$install_user/.config, creating..."
+  edebug "No existing .config folder located at /home/$install_user/.config, creating..."
   sudo -u "$install_user" mkdir "/home/$install_user/.config/ScriptSettings"
   if [ -f "/home/"$install_user"/bin/sync_scripts/config.sh" ]; then
-    log "located default config file, copying in..."
+    enotify "located default config file, copying in..."
     cp "/home/"$install_user"/bin/sync_scripts/config.sh" "/home/"$install_user"/.config/ScriptSettings/sync_config.sh"
-    log "Please now set up required conditions, locations and options in /home/"$install_user"/.config/ScriptSettings/sync_config.sh and re-run this script"
+    enotify "Please now set up required conditions, locations and options in /home/"$install_user"/.config/ScriptSettings/sync_config.sh and re-run this script"
   else
-    log_err "No original or template .config folder or template located"
+    eerror "No original or template .config folder or template located"
     exit 1
   fi
 fi
 abcde_conf_create
 #
 #
-log "control scripts install script completed"
+enotify "control scripts install script completed"
 exit 0
