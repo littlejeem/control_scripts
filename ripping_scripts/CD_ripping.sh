@@ -22,17 +22,17 @@
 temp_dir="/tmp/CD_Ripping"
 if [[ -d "$temp_dir" ]]; then
   while [[ -d "$temp_dir" ]]; do
-    log "previous script still running"
+    enotify "previous script still running"
     sleep 30; done
   else
-    log "no previously running script detected"
+    enotify "no previously running script detected"
 fi
 log_deb "temp dir is set as: $temp_dir"
 mkdir "$temp_dir"
 if [[ $? = 0 ]]; then
-  log "temp directory set successfully"
+  enotify "temp directory set successfully"
 else
-  log_err "temp directory NOT set successfully, exiting"
+  eerror "temp directory NOT set successfully, exiting"
   exit 1
 fi
 #
@@ -142,31 +142,31 @@ log_deb "exported $rip_flac to OUTPUTDIR $OUTPUTDIR for abcde use"
 #+------------------+
 #+---Start Script---+
 #+------------------+
-log "Script Started"
-log "Stage 1 - FLAC Ripping Started"
+enotify "Script Started"
+enotify "Stage 1 - FLAC Ripping Started"
 cd $rip_flac
 ripcd_flac
 if [[ $? -ne 1 ]]; then
-  log "Successfully ripped cd completed with no errors"
+  enotify "Successfully ripped cd completed with no errors"
 else
-  log_err "ripd_flac function failed with an error, check logs. cd NOT ripped"
+  eerror "ripd_flac function failed with an error, check logs. cd NOT ripped"
   exit 1
 fi
-log "Stage 2 - FLAC Ripping Completed"
-log "Stage 3 - Calling MusicSync to process files"
+enotify "Stage 2 - FLAC Ripping Completed"
+enotify "Stage 3 - Calling MusicSync to process files"
 sudo -u $install_user /home/"$install_user"/bin/sync_scripts/MusicSync.sh # <----------SWITCH TO VARIABLE IN CONFIG?...as in ON, OFF?
 if [[ $? -ne 1 ]]; then
-  log "MusicSync completed with no errors"
+  enotify "MusicSync completed with no errors"
 else
-  log_err "MusicSync failed with an error, check logs"
+  eerror "MusicSync failed with an error, check logs"
   exit 1
 fi
-log "Stage 4 - Ejecting CD"
+enotify "Stage 4 - Ejecting CD"
 eject /dev/$drive_install
 if [[ $? -ne 1 ]]; then
-  log "Ejected drive successfully"
+  enotify "Ejected drive successfully"
 else
-  log_err "Drive failed to eject, check logs. Rest of script completed"
+  eerror "Drive failed to eject, check logs. Rest of script completed"
   exit 1
 fi
 #
