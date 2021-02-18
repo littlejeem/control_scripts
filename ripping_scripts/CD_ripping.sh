@@ -15,6 +15,9 @@
 #+---"VERSION 2.0"---+
 #+-------------------+
 #
+#set default logging level
+verbosity=4
+#
 #
 #+---------------------------------------+
 #+---"check if script already running"---+
@@ -27,7 +30,7 @@ if [[ -d "$temp_dir" ]]; then
   else
     enotify "no previously running script detected"
 fi
-log_deb "temp dir is set as: $temp_dir"
+edebug "temp dir is set as: $temp_dir"
 mkdir "$temp_dir"
 if [[ $? = 0 ]]; then
   enotify "temp directory set successfully"
@@ -130,13 +133,13 @@ ripcd_flac () {
 #+----------------------+
 timestamp=$(date +%a%R)
 export "$timestamp" #<---Export so that abcde appends to folder name so that each 'unknown artist' has a time attached
-log_deb "exported timestamp as $timestamp"
+edebug "exported timestamp as $timestamp"
 export "$install_user" #<---Used when 'munging' names, used in abcde.conf
 export "$install_group" #<---Used when 'munging' names, used in abcde.conf
 #
 OUTPUTDIR=$(echo $rip_flac) #<---Export so that abcde can use in its conf
 export $OUTPUTDIR
-log_deb "exported $rip_flac to OUTPUTDIR $OUTPUTDIR for abcde use"
+edebug "exported $rip_flac to OUTPUTDIR $OUTPUTDIR for abcde use"
 #
 #
 #+------------------+

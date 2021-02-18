@@ -6,6 +6,8 @@
 #+---------------------+
 udev_loc="/etc/udev/rules.d/"
 sysd_loc="/etc/systemd/system/"
+#set default logging level
+verbosity=4
 #
 #
 #+-------------------+
