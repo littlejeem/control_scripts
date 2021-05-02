@@ -7,7 +7,7 @@
 udev_loc="/etc/udev/rules.d/"
 sysd_loc="/etc/systemd/system/"
 #set default logging level
-verbosity=4
+verbosity=3
 #
 #
 #+-------------------+
@@ -244,9 +244,9 @@ fi
 #+---------------------------+
 #+---"Source helper files"---+
 #+---------------------------+
-if [ -f "/home/"$install_user"/bin/standalone_scripts/helper_script.sh" ]; then
+if [ -f /usr/local/bin/helper_script.sh ]; then
   echo "$(date +%b"  "%-d" "%T)" " "INFO: helper script found, using it
-  source /home/"$install_user"/bin/standalone_scripts/helper_script.sh
+  source /usr/local/bin/helper_script.sh
 else
   echo "$(date +%b"  "%-d" "%T)" " "ERROR: helper file not found exiting
   exit 1
