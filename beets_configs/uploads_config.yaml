@@ -1,6 +1,6 @@
 
 directory: /home/jlivin25/Music/Library/PlayUploads
-library: /home/jlivin25/.config/beets/uploads/musiclibrary.blb
+library: /home/jlivin25/.config/ScriptSettings/beets/uploads/musiclibrary.blb
 
 import:
     copy: no
@@ -10,12 +10,14 @@ import:
     quiet_fallback: skip
     timid: no
     log: beetslog.txt
-ignore: .AppleDouble ._* *~ .DS_Store
+
+ignore: [".AppleDouble", "._*", "*~", ".DS_Store", "Unknown Artist-*"]
+
 art_filename: folder
 
 plugins: embedart chroma fetchart convert permissions gmusic
 
-pluginpath: /home/jlivin25/.config/beets/myplugins
+pluginpath: /home/jlivin25/.config/ScriptSettings/beets/myplugins
 
 threaded: yes
 
@@ -63,4 +65,4 @@ gmusic:
     email: <INSERT>
     password: <INSERT>
     auto: yes
-    oauth_file: /home/jlivin25/.config/beets/oauth.cred
+    oauth_file: /home/jlivin25/.config/ScriptSettings/beets/oauth.cred
