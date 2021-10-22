@@ -392,10 +392,10 @@ fi
 #
 #
 if [ -d "/home/"$install_user"/.config" ]; then
-  enotify "Located .config folder, looking for existing sync_config.sh"
-  if [ -f "/home/"$install_user"/.config/ScriptSettings/sync_config.sh" ]; then
+  enotify "Located .config folder, looking for existing config.sh"
+  if [ -f "/home/"$install_user"/.config/ScriptSettings/config.sh" ]; then
     enotify "located existing sync_config file, using..."
-    source /home/"$install_user"/.config/ScriptSettings/sync_config.sh
+    source /home/"$install_user"/.config/ScriptSettings/config.sh
     #+-------------------------------------+
     #+---"Check necessary folders exist"---+
     #+-------------------------------------+
