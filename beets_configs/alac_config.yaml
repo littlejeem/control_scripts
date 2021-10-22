@@ -1,6 +1,6 @@
 
 directory: /home/jlivin25/Music/Library/alacimports
-library: /home/jlivin25/.config/ScriptSettings/beets/alac/musiclibrary.blb
+library: /home/jlivin25/.config/beets/alac/musiclibrary.blb
 
 import:
     copy: yes

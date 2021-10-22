@@ -1,6 +1,6 @@
 
 directory: /home/jlivin25/Music/Library/flacimports
-library: /home/jlivin25/.config/ScriptSettings/beets/flac/musiclibrary.blb
+library: /home/jlivin25/.config/beets/flac/musiclibrary.blb
 
 import:
     copy: no

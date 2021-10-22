@@ -25,17 +25,17 @@ verbosity=4
 temp_dir="/tmp/CD_Ripping"
 if [[ -d "$temp_dir" ]]; then
   while [[ -d "$temp_dir" ]]; do
-    enotify "previous script still running"
+    echo "previous script still running"
     sleep 30; done
   else
-    enotify "no previously running script detected"
+    echo "no previously running script detected"
 fi
-edebug "temp dir is set as: $temp_dir"
-mkdir "$temp_dir"
+echo "temp dir is set as: $temp_dir"
+echo "$temp_dir"
 if [[ $? = 0 ]]; then
-  enotify "temp directory set successfully"
+  echo "temp directory set successfully"
 else
-  eerror "temp directory NOT set successfully, exiting"
+  echo "temp directory NOT set successfully, exiting"
   exit 1
 fi
 #
@@ -116,8 +116,8 @@ PATH=/sbin:/bin:/usr/bin:/home/"$install_user":/home/"$install_user"/.local/bin:
 #+-------------------+
 #+---Source helper---+
 #+-------------------+
-source /home/$install_user/bin/standalone_scripts/helper_script.sh
-source /home/$install_user/.config/ScriptSettings/sync_config.sh
+source /usr/local/bin/helper_script.sh
+source /usr/local/bin/config.sh
 #
 #
 #+----------------------+
