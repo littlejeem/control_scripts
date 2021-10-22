@@ -1,6 +1,47 @@
 #!/bin/bash
 #
 #
+#+--------------------------------------+
+#+---"Exit Codes & Logging Verbosity"---+
+#+--------------------------------------+
+# pick from 64 - 113 (https://tldp.org/LDP/abs/html/exitcodes.html#FTN.AEN23647)
+# exit 0 = Success
+# exit 64 = Variable Error
+# exit 65 = Sourcing file/folder error
+# exit 66 = Processing Error
+# exit 67 = Required Program Missing
+#
+#verbosity levels
+#silent_lvl=0
+#crt_lvl=1
+#err_lvl=2
+#wrn_lvl=3
+#ntf_lvl=4
+#inf_lvl=5
+#dbg_lvl=6
+#
+#
+#+----------------------+
+#+---"Check for Root"---+
+#+----------------------+
+if [[ $EUID -ne 0 ]]; then
+  echo "This script must be run as root"
+  exit 1
+fi
+#
+#
+#+----------------------+
+#+---"Set scrit name"---+
+#+----------------------+
+lockname=control_scripts_install.sh
+#
+#
+#+--------------------------+
+#+---Source helper script---+
+#+--------------------------+
+source /usr/local/bin/helper_script.sh
+#
+#
 #+---------------------+
 #+---"Set Variables"---+
 #+---------------------+
@@ -8,6 +49,13 @@ udev_loc="/etc/udev/rules.d/"
 sysd_loc="/etc/systemd/system/"
 #set default logging level
 verbosity=3
+version=0.1
+#
+#
+#+---------------------------------------+
+#+---"check if script already running"---+
+#+---------------------------------------+
+check_running
 #
 #
 #+-------------------+
@@ -33,10 +81,10 @@ Drive_Detect () {
   else
     edebug "changed to /tmp successfully"
   fi
-  edebug "$udev_rule"
-  edebug "$drive_number"
-  edebug "$install_user"
-  edebug "$env_ammend"
+  edebug "udev_rule set as: $udev_rule"
+  edebug "drive number set as: $drive_number"
+  edebug "install user being used: $install_user"
+  edebug "env_ammend is set as: $env_ammend"
   #drive_model=$(sudo udevadm info /dev/$drive_number | grep ID_MODEL=)
   drive_model=$(udevadm info -a -n /dev/$drive_number | grep -o 'ATTRS{model}=="[^"]*"')
   #ATTRS{model}=="BD-CMB UJ160    "
@@ -221,48 +269,47 @@ done
 #+-------------------------------+
 #+---Configure GETOPTS options---+
 #+-------------------------------+
+esilent "control_scripts_install.sh started"
 #user
 if [[ $user_install = "" ]]; then
-  export install_user="jlivin25"
+  install_user="jlivin25"
+  export install_user
 else
+  install_user=$(echo $user_install)
   export install_user=$(echo $user_install)
 fi
+edebug "Using $install_user as install user"
 #group
 if [[ $group_install = "" ]]; then
-  install_user="jlivin25"
+  install_group="jlivin25"
 else
   install_group=$(echo $group_install)
 fi
+edebug "install group set as: $install_group"
 #drive
 if [[ $drive_install = "" ]]; then
   drive_number="sr0"
+  edebug "no alternative drive specified, using default: $drive_number as drive install"
 else
   drive_number=$(echo $drive_install)
+  edebug "alternative drive specified, using: $drive_number as drive install"
 fi
 #
-#
-#+---------------------------+
-#+---"Source helper files"---+
-#+---------------------------+
-if [ -f /usr/local/bin/helper_script.sh ]; then
-  echo "$(date +%b"  "%-d" "%T)" " "INFO: helper script found, using it
-  source /usr/local/bin/helper_script.sh
-else
-  echo "$(date +%b"  "%-d" "%T)" " "ERROR: helper file not found exiting
-  exit 1
-fi
+edebug "GETOPTS options set"
 #
 #
-#+----------------------+
-#+---"Check for Root"---+
-#+----------------------+
-edebug env
+#+-------------------+
+#+---Set up script---+
+#+-------------------+
+#Get environmental info
 enotify "INVOCATION_ID is set as: $INVOCATION_ID"
 enotify "EUID is set as: $EUID"
-if [[ $EUID -ne 0 ]]; then
-  echo "This script must be run as root"
-  exit 1
-fi
+edebug "PATH is: $PATH"
+#Grab PID
+script_pid=$(echo $$)
+edebug "control_scripts_install.sh PID is: $script_pid"
+#display version
+edebug "Version is: $version"
 #
 #
 #+-------------------------+
@@ -352,7 +399,7 @@ if [ -d "/home/"$install_user"/.config" ]; then
     #+-------------------------------------+
     #+---"Check necessary folders exist"---+
     #+-------------------------------------+
-    #rip dest
+    #RIP dest
     if [ -d "$rip_flac" ]; then
       enotify "rip destination already exists, using"
     else
@@ -367,7 +414,7 @@ if [ -d "/home/"$install_user"/.config" ]; then
         exit 1
       fi
     fi
-    #flac dest
+    #FLAC dest
     if [ -d "$FLAC_musicdest" ]; then
       enotify "flac music destination already exists, using"
     else
@@ -389,7 +436,7 @@ if [ -d "/home/"$install_user"/.config" ]; then
         exit 1
       fi
     fi
-    #alac dest
+    #ALAC dest
     if [ -d "$M4A_musicdest" ]; then
       enotify "M4A music destination already exists, using"
     else
@@ -404,20 +451,41 @@ if [ -d "/home/"$install_user"/.config" ]; then
         exit 1
       fi
     fi
-  #beets configs
+  #beets config section
+  #beets FLAC config location
   if [ -d "$beets_flac_path" ]; then #<----make this an AND comparison??
     enotify "beets config folder exists, using"
   else
-    edebug "beets config folder(s) doen't exist, creating"
+    edebug "beets config folder(s) don't exist, creating"
+    #
     sudo -u $install_user mkdir -p $beets_flac_path
+    if [[ $? -ne 1 ]]; then
+      enotify "successfully created directory $beets_flac_path"
+    else
+      eerror "creating directory; $beets_flac_path failed, exiting"
+      exit 1
+    fi
+    #beets ALAC config location
     sudo -u $install_user mkdir -p $beets_alac_path
+    if [[ $? -ne 1 ]]; then
+      enotify "successfully created directory $beets_alac_path"
+    else
+      eerror "creating directory; $beets_alac_path failed, exiting"
+      exit 1
+    fi
+    #beets UPLOAD config location
     sudo -u $install_user mkdir -p $beets_upload_path
     if [[ $? -ne 1 ]]; then
-      if [ -d "$beets_flac_path" ]; then
-        enotify "beets config folder(s) created successfully at $beets_flac_path, $beets_alac_path, $beets_upload_path"
-      fi
+      enotify "successfully created directory $beets_upload_path"
     else
-      eerror "beets config folder(s) not able to be created, exiting"
+      eerror "creating directory; $beets_upload_path failed, exiting"
+      exit 1
+    fi
+    #
+    if [ -d "$beets_flac_path" ] && [ -d "$beets_alac_path" ] && [ -d "$beets_upload_path" ]; then
+      enotify "beets config folder(s) created successfully at $beets_flac_path, $beets_alac_path, $beets_upload_path"
+    else
+      eerror "error in creating beets config folder(s) not able to be created, exiting"
       exit 1
     fi
 #    chown -R $user_install:$group_install $beets_flac_path
@@ -448,5 +516,5 @@ fi
 abcde_conf_create
 #
 #
-enotify "control scripts install script completed"
+esilent "control scripts install script completed"
 exit 0
