@@ -1,5 +1,11 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
+############################################################################################################
+###                                                 "INFO"                                               ###
+### A sript to automate the necessary steps to install control_scripts, put items in necessary locations ###
+### for the first time running of scripts in other repository's such as sync_scripts/MusicSync.sh        ###
+### Its vital that the locations have
+############################################################################################################
 #
 #+--------------------------------------+
 #+---"Exit Codes & Logging Verbosity"---+
@@ -21,6 +27,12 @@
 #dbg_lvl=6
 #
 #
+#+------------------------------+
+#+---"Set Special Parameters"---+
+#+------------------------------+
+#-u Treat unset variables and parameters other than the special parameters ‘@’ or ‘*’ as an error when performing parameter expansion. An error message will be written to the standard error, and a non-interactive shell will exit.
+#set -u
+#
 #+----------------------+
 #+---"Check for Root"---+
 #+----------------------+
@@ -30,10 +42,16 @@ if [[ $EUID -ne 0 ]]; then
 fi
 #
 #
-#+----------------------+
-#+---"Set scrit name"---+
-#+----------------------+
-lockname=control_scripts_install.sh
+#+-----------------------+
+#+---"Set script name"---+
+#+-----------------------+
+# imports the name of this script
+# failure to to set this as lockname will result in check_running failing and 'hung' script
+# manually set this if being run as child from another script otherwise will inherit name of calling/parent script
+scriptlong=`basename "$0"`
+lockname=${scriptlong::-3} # reduces the name to remove .sh
+#
+#
 #
 #
 #+--------------------------+
@@ -49,7 +67,7 @@ udev_loc="/etc/udev/rules.d/"
 sysd_loc="/etc/systemd/system/"
 #set default logging level
 verbosity=3
-version=0.1
+version=0.3
 #
 #
 #+---------------------------------------+
@@ -63,17 +81,28 @@ check_running
 #+-------------------+
 helpFunction () {
    echo ""
-   echo "Usage: $0 -u foo_user -d bar_drive"
-   echo "Usage: $0"
-   echo -e "\t Running the script with no flags causes default behaviour"
+   echo "Usage: $0 $scriptlong"
+   echo "Usage: $0 -V selects dry-run with verbose level logging"
+   echo -e "\t-d Use this flag to specify dry run, no files will be converted, useful in conjunction with -V or -G "
+   echo -e "\t-S Override set verbosity to specify silent log level"
+   echo -e "\t-V Override set verbosity to specify Verbose log level"
+   echo -e "\t-G Override set verbosity to specify Debug log level"
    echo -e "\t-u Use this flag to specify a user to install scripts under, eg. user foo is entered -u foo, as i made these scripts for myself the defualt user is my own"
    echo -e "\t-g Use this flag to specify a usergroup to install scripts under, eg. group bar is entered -g bar, combined with the -u flag these settings will be used as: chown foo:bar. As i made these scripts for myself the defualt group is my own"
    echo -e "\t-d Use this flag to specify the identity of the CD/DVD/BLURAY drive being used, eg. /dev/sr1 is entered -d sr1, sr0 will be the assumed default "
-   exit 1 # Exit script after printing help
+   echo -e "\t Running the script with no flags causes default behaviour with logging level set via 'verbosity' variable"
+   echo -e "\t-h -H Use this flag for help"
+   if [ -d "/tmp/$lockname" ]; then
+     edebug "removing lock directory"
+     rm -r "/tmp/$lockname"
+   else
+     edebug "problem removing lock directory"
+   fi
+   exit 65 # Exit script after printing help
 }
 #
 #
-Drive_Detect () {
+drive_detect () {
   cd /tmp
   if [[ $? -ne 0 ]]; then
     eerror "changing to /tmp failed, most likely this is a missing directory"
@@ -87,7 +116,9 @@ Drive_Detect () {
   edebug "env_ammend is set as: $env_ammend"
   #drive_model=$(sudo udevadm info /dev/$drive_number | grep ID_MODEL=)
   drive_model=$(udevadm info -a -n /dev/$drive_number | grep -o 'ATTRS{model}=="[^"]*"')
-  #ATTRS{model}=="BD-CMB UJ160    "
+  #example of return is: ATTRS{model}=="BD-CMB UJ160    "
+  #for testing with no drive hooked up, eg on VM_Machine uncomment this next line
+  #drive_model=ATTRS{model}=="BD-CMB UJ160    "
   edebug "$drive_model"
   udev_insert='ACTION=="change",KERNEL=="'"$drive_number"'",SUBSYSTEM=="block",'"$drive_model"',ENV{ID_CDROM_MEDIA_'"$env_ammend"'}=="1",ENV{HOME}="/home/'"$install_user"'",RUN+="/bin/systemctl start '"${env_ammend}"'_ripping.service"'
   edebug "$udev_insert"
@@ -131,7 +162,7 @@ EOF
 #
 #
 abcde_conf_create () {
-cat > /home/"$install_user"/.config/ScriptSettings/abcde_flac.conf << 'EOF'
+cat > "$abcde_loc"/abcde_flac.conf << 'EOF'
 LOWDISK=n
 INTERACTIVE=n
 CDDBMETHOD=cddb
@@ -221,7 +252,7 @@ fi
 FINALDIR="$(dirname "$OUTPUTDIR")"
 FINALDIR1="$(dirname "$OUTPUTDIR")"
 C_CMD=(chown -R ${install_user}:${install_group} "$FINALDIR")
-C_CMD1=(chmod -R 777 "$FINALDIR")
+C_CMD1=(chmod -R 775 "$FINALDIR")
 #echo "${C_CMD[@]}" >> tmp2.log
 "${C_CMD[@]}"
 "${C_CMD1[@]}"
@@ -236,30 +267,57 @@ fi
 }
 EOF
 if [[ $? -ne 1 ]]; then
-  enotify "abcde_flac.conf created successfully at /home/"$install_user"/.config/ScriptSettings/"
+  enotify "abcde_flac.conf created successfully at "$abcde_loc""
 else
   eerror "abcde_flac.conf not able to be created, exiting"
   exit 1
 fi
-chown $install_user:$install_user /home/"$install_user"/.config/ScriptSettings/abcde_flac.conf
+chown $install_user:$install_user "$abcde_loc"/abcde_flac.conf
 if [[ $? -ne 1 ]]; then
-  enotify "successfully chown'd /home/"$install_user"/.config/ScriptSettings/abcde_flac.conf"
+  enotify "successfully chown'd $abcde_loc/abcde_flac.conf"
 else
-  eerror "chown'ing /home/"$install_user"/.config/ScriptSettings/abcde_flac.conf failed, exiting"
+  eerror "chown'ing $abcde_loc/abcde_flac.conf failed, exiting"
   exit 1
 fi
 }
 #
+# make the folder_check var equal to the folder variable to search for, eg: folder_check=$alaclibrary_source
+check_folder () {
+  if [[ -d "$folder_check" ]]; then
+    enotify "$folder_check source already exists, using"
+  else
+    edebug "$folder_check source doesn't exist, creating"
+    sudo -u "$install_user" mkdir -p "$folder_check"
+    if [[ $? -ne 1 ]]; then
+      if [[ -d "$folder_check" ]]; then
+        enotify "$folder_check source created successfully"
+      fi
+    else
+      eerror "$folder_check source not able to be created, exiting"
+      exit 65
+    fi
+  fi
+}
 #
-#+-----------------------+
-#+---Set up user flags---+
-#+-----------------------+
-while getopts u:g:d:h flag
+#+------------------------+
+#+---"Get User Options"---+
+#+------------------------+
+while getopts ":SVGHhu:g:d:" opt
 do
-    case "${flag}" in
-        u) user_install=${OPTARG};;
-        g) group_install=${OPTARG};;
-        d) drive_install=${OPTARG};;
+    case "${opt}" in
+        S) verbosity=$silent_lvl
+        edebug "-S specified: Silent mode";;
+        V) verbosity=$inf_lvl
+        edebug "-V specified: Verbose mode";;
+        G) verbosity=$dbg_lvl
+        edebug "-G specified: Debug mode";;
+        u) user_install=${OPTARG}
+        edebug "-u specified: User set as: $user_install";;
+        g) group_install=${OPTARG}
+        edebug "-g specified: Group set as: $group_install";;
+        d) drive_install=${OPTARG}
+        edebug "-d specified: optical drive set as: $drive_install";;
+        H) helpFunction;;
         h) helpFunction;;
         ?) helpFunction;;
     esac
@@ -271,7 +329,7 @@ done
 #+-------------------------------+
 esilent "control_scripts_install.sh started"
 #user
-if [[ $user_install = "" ]]; then
+if [[ -z $user_install ]]; then
   install_user="jlivin25"
   export install_user
 else
@@ -280,14 +338,14 @@ else
 fi
 edebug "Using $install_user as install user"
 #group
-if [[ $group_install = "" ]]; then
+if [[ -z $group_install ]]; then
   install_group="jlivin25"
 else
   install_group=$(echo $group_install)
 fi
 edebug "install group set as: $install_group"
 #drive
-if [[ $drive_install = "" ]]; then
+if [[ -z $drive_install ]]; then
   drive_number="sr0"
   edebug "no alternative drive specified, using default: $drive_number as drive install"
 else
@@ -302,7 +360,7 @@ edebug "GETOPTS options set"
 #+---Set up script---+
 #+-------------------+
 #Get environmental info
-enotify "INVOCATION_ID is set as: $INVOCATION_ID"
+#enotify "INVOCATION_ID is set as: $INVOCATION_ID"
 enotify "EUID is set as: $EUID"
 edebug "PATH is: $PATH"
 #Grab PID
@@ -319,17 +377,17 @@ enotify "setting up UDEV rules & SYSTEMD services"
 #CD
 udev_rule="82-AutoCDInsert.rules"
 env_ammend="CD" #ENV{ID_CDROM_MEDIA_CD}
-Drive_Detect
+drive_detect
 systemd_service_create
 #DVD
 udev_rule="83-AutoDVDInsert.rules"
 env_ammend="DVD" #ENV{ID_CDROM_MEDIA_DVD}
-Drive_Detect
+drive_detect
 systemd_service_create
 #BLURAY
 udev_rule="84-AutoBDInsert.rules"
 env_ammend="BD" #ENV{ID_CDROM_MEDIA_BD}
-Drive_Detect
+drive_detect
 systemd_service_create
 #
 enotify "created UDEV & SYSTEMD files"
@@ -339,7 +397,7 @@ enotify "reloading UDEV rules"
 udevadm control --reload
 if [[ $? -ne 0 ]]; then
   eerror "Reloading UDEV rules failed"
-  exit 1
+  exit 66
 else
   enotify "Reloading UDEV rules succeded"
 fi
@@ -347,174 +405,196 @@ fi
 systemctl daemon-reload
 if [[ $? -ne 0 ]]; then
   eerror "Reloading .service files failed"
-  exit 1
+  exit 66
 else
   enotify "Reloading .service files succeded"
 fi
 #
 #
-#+-------------------------------+
-#+---"Install ABCDE cd ripper"---+
-#+-------------------------------+
-if ! command -v abcde &> /dev/null
-then
-  eerror "abcde could not be found, script won't function wihout it, attempting install"
-  apt update && apt install abcde -y
-  if ! command -v abcde &> /dev/null
-  then
-    eerror "abcde install failed, scripts won't function wihout it, exiting"
-    exit 1
+#+--------------------------------------------+
+#+---"Check for necessary programs / tools"---+
+#+--------------------------------------------+
+#abcde
+program_check="abcde"
+prog_check
+#
+#flac
+program_check="flac"
+prog_check
+#
+#
+#+---------------------------------------------+
+#+---"Check necessary folders / files exist"---+
+#+---------------------------------------------+
+if [ -f "/usr/local/bin/config.sh" ]; then
+  enotify "located existing sync_config file, using..."
+  source /usr/local/bin/config.sh
+  #config file $alaclibrary_source ; Beets library location where the FLAC files are converted to M4A and placed
+  folder_check=$alaclibrary_source
+  check_folder
+  #
+  #flaclibrary_source="/home/jlivin25/Music/Library/flacimports/" #Beets library location where the FLAC files are tagged and moved too
+  folder_check=$flaclibrary_source
+  check_folder
+  #
+  #upload_mp3="/home/jlivin25/Music/Library/PlayUploads/"
+  folder_check=$upload_mp3
+  check_folder
+  #
+  #RIP dest
+  folder_check=$rip_flac
+  check_folder
+  #
+  #FLAC dest
+  folder_check=$FLAC_musicdest
+  check_folder
+  chown -R "$user_install":"$group_install" "$folder_check"
+  if [[ $? -ne 1 ]]; then
+    enotify "successfully chmod'ed directory $folder_check"
   else
-    enotify "abcde now installed, continuing"
+    eerror "chmod'ing directory; $folder_check failed, exiting"
+    exit 65
   fi
-else
-    enotify "abcde command located, continuing"
-fi
-#
-#
-#+--------------------------------+
-#+---"Install FLAC requirement"---+
-#+--------------------------------+
-if ! command -v flac &> /dev/null
-then
-  eerror "FLAC could not be found, script won't function wihout it, attempting install"
-  apt update && apt install flac -y
-  if ! command -v flac &> /dev/null
-  then
-    eerror "FLAC install failed, scripts won't function wihout it, exiting"
-    exit 1
-  else
-    enotify "FLAC now installed, continuing"
-  fi
-else
-    enotify "FLAC command located, continuing"
-fi
-#
-#
-if [ -d "/home/"$install_user"/.config" ]; then
-  enotify "Located .config folder, looking for existing config.sh"
-  if [ -f "/home/"$install_user"/.config/ScriptSettings/config.sh" ]; then
-    enotify "located existing sync_config file, using..."
-    source /home/"$install_user"/.config/ScriptSettings/config.sh
-    #+-------------------------------------+
-    #+---"Check necessary folders exist"---+
-    #+-------------------------------------+
-    #RIP dest
-    if [ -d "$rip_flac" ]; then
-      enotify "rip destination already exists, using"
-    else
-      edebug "rip destination doesn't exist, creating"
-      sudo -u $install_user mkdir -p $rip_flac
-      if [[ $? -ne 1 ]]; then
-        if [ -d "$rip_flac" ]; then
-          enotify "rip destination created successfully at $rip_flac"
-        fi
-      else
-        eerror "rip destination not able to be created, exiting"
-        exit 1
-      fi
-    fi
-    #FLAC dest
-    if [ -d "$FLAC_musicdest" ]; then
-      enotify "flac music destination already exists, using"
-    else
-      edebug "flac music destination doesn't exist, creating"
-      sudo -u $install_user mkdir -p $FLAC_musicdest
-      if [[ $? -ne 1 ]]; then
-        if [ -d "$FLAC_musicdest" ]; then
-          enotify "flac music destination created successfully at $FLAC_musicdest"
-        fi
-      else
-        eerror "flac music destination not able to be created, exiting"
-        exit 1
-      fi
-      chown -R $user_install:$group_install $FLAC_musicdest
-      if [[ $? -ne 1 ]]; then
-        enotify "successfully chmod'ed directory $FLAC_musicdest"
-      else
-        eerror "chmod'ing directory; $FLAC_musicdest failed, exiting"
-        exit 1
-      fi
-    fi
-    #ALAC dest
-    if [ -d "$M4A_musicdest" ]; then
-      enotify "M4A music destination already exists, using"
-    else
-      edebug "M4A music destination doesn't exist, creating"
-      sudo -u $install_user mkdir -p $M4A_musicdest
-      if [[ $? -ne 1 ]]; then
-        if [ -d "$M4A_musicdest" ]; then
-          enotify "M4A music destination created successfully at $M4A_musicdest"
-        fi
-      else
-        eerror "M4A music destination not able to be created, exiting"
-        exit 1
-      fi
-    fi
+  #ALAC dest
+  folder_check=$M4A_musicdest
+  check_folder
+  #
   #beets config section
+  #
   #beets FLAC config location
-  if [ -d "$beets_flac_path" ]; then #<----make this an AND comparison??
-    enotify "beets config folder exists, using"
+  folder_check=$beets_flac_path
+  check_folder
+  #
+  #beets ALAC config location
+  folder_check=$beets_alac_path
+  check_folder
+  #
+  #beets UPLOAD config location
+  folder_check=$beets_upload_path
+  check_folder
+  #
+  #
+  if [ -d "$beets_flac_path" ] && [ -d "$beets_alac_path" ] && [ -d "$beets_upload_path" ]; then
+    enotify "beets config folder(s) created successfully at $beets_flac_path, $beets_alac_path, $beets_upload_path"
   else
-    edebug "beets config folder(s) don't exist, creating"
-    #
-    sudo -u $install_user mkdir -p $beets_flac_path
-    if [[ $? -ne 1 ]]; then
-      enotify "successfully created directory $beets_flac_path"
-    else
-      eerror "creating directory; $beets_flac_path failed, exiting"
-      exit 1
+    eerror "error in creating beets config folder(s) not able to be created, exiting"
+    exit 65
+  fi
+  #
+  #BEETS CONFIG FILES
+  #beets_flac_path="/home/$install_user/.config/beets/flac" #path to beets config & library file directory (FLAC), do not include a file name
+  if [ -d "$beets_flac_path" ]; then
+    enotify "FLAC beets config directory already exists, using"
+    if [ -d "/home/$install_user/bin/control_scripts/beets_configs" ]; then
+      sudo -u $install_user cp /home/$install_user/bin/control_scripts/beets_configs/flac_config.yaml $beets_flac_path
     fi
-    #beets ALAC config location
-    sudo -u $install_user mkdir -p $beets_alac_path
+  else
+    edebug "FLAC beets config directory doesn't exist, creating"
+    sudo -u $beets_flac_path mkdir -p $M4A_musicdest
     if [[ $? -ne 1 ]]; then
-      enotify "successfully created directory $beets_alac_path"
+      if [ -d "$beets_flac_path" ]; then
+        edebug "FLAC beets config directory created successfully at $beets_flac_path"
+        if [ -d "/home/$install_user/bin/control_scripts/beets_configs" ]; then
+          sudo -u $install_user cp /home/$install_user/bin/control_scripts/beets_configs/flac_config.yaml $beets_flac_path
+        fi
+      fi
     else
-      eerror "creating directory; $beets_alac_path failed, exiting"
-      exit 1
+      eerror "FLAC beets config directory not able to be created, exiting"
+      exit 65
     fi
-    #beets UPLOAD config location
+  fi
+  #
+  #beets_alac_path="/home/$install_user/.config/beets/alac" #path to beets config & library file directory (alac), do not include a file name
+  if [ -d "$beets_alac_path" ]; then
+    enotify "ALAC beets config directory already exists, using"
+    if [ -d "/home/$install_user/bin/control_scripts/beets_configs" ]; then
+      sudo -u $install_user cp /home/$install_user/bin/control_scripts/beets_configs/flac_config.yaml $beets_alac_path
+    fi
+  else
+    edebug "FLAC beets config directory doesn't exist, creating"
+    sudo -u $beets_alac_path mkdir -p $M4A_musicdest
+    if [[ $? -ne 1 ]]; then
+      if [ -d "$beets_alac_path" ]; then
+        edebug "FLAC beets config directory created successfully at $beets_alac_path"
+        if [ -d "/home/$install_user/bin/control_scripts/beets_configs" ]; then
+          sudo -u $install_user cp /home/$install_user/bin/control_scripts/beets_configs/alac_config.yaml $beets_alac_path
+        fi
+      fi
+    else
+      eerror "FLAC beets config directory not able to be created, exiting"
+      exit 65
+    fi
+  fi
+  #
+  #beets_upload_path="/home/$install_user/.config/beets/uploads" #path to beets config & library file directory (upload), do not include a file name
+  if [ -d "$beets_upload_path" ]; then
+    enotify "UPLOAD beets config directory already exists, using"
+    if [ -d "/home/$install_user/bin/control_scripts/beets_configs" ]; then
+      sudo -u $install_user cp /home/$install_user/bin/control_scripts/beets_configs/flac_config.yaml $beets_upload_path
+    fi
+  else
+    edebug "FLAC beets config directory doesn't exist, creating"
     sudo -u $install_user mkdir -p $beets_upload_path
     if [[ $? -ne 1 ]]; then
-      enotify "successfully created directory $beets_upload_path"
+      if [ -d "$beets_upload_path" ]; then
+        edebug "FLAC beets config directory created successfully at $beets_upload_path"
+        if [ -d "/home/$install_user/bin/control_scripts/beets_configs" ]; then
+          sudo -u $install_user cp /home/$install_user/bin/control_scripts/beets_configs/alac_config.yaml $beets_upload_path
+        fi
+      fi
     else
-      eerror "creating directory; $beets_upload_path failed, exiting"
-      exit 1
+      eerror "FLAC beets config directory not able to be created, exiting"
+      exit 65
     fi
-    #
-    if [ -d "$beets_flac_path" ] && [ -d "$beets_alac_path" ] && [ -d "$beets_upload_path" ]; then
-      enotify "beets config folder(s) created successfully at $beets_flac_path, $beets_alac_path, $beets_upload_path"
-    else
-      eerror "error in creating beets config folder(s) not able to be created, exiting"
-      exit 1
-    fi
-#    chown -R $user_install:$group_install $beets_flac_path
-#    chown -R $user_install:$group_install $beets_alac_path
-#    chown -R $user_install:$group_install $beets_upload_path
-#    if [[ $? -ne 1 ]]; then
-#      enotify "successfully chmod'ed directory $beets_flac_path, $beets_alac_path, $beets_upload_path"
-#    else
-#      eerror "chmod'ing beets config folder(s) failed, exiting"
-#      exit 1
-#    fi
-  fi
-  else
-    eerror "No existing sync_config file found, error?"
   fi
 else
-  edebug "No existing .config folder located at /home/$install_user/.config, creating..."
-  sudo -u "$install_user" mkdir "/home/$install_user/.config/ScriptSettings"
-  if [ -f "/home/"$install_user"/bin/sync_scripts/config.sh" ]; then
-    enotify "located default config file, copying in..."
-    cp "/home/"$install_user"/bin/sync_scripts/config.sh" "/home/"$install_user"/.config/ScriptSettings/sync_config.sh"
-    enotify "Please now set up required conditions, locations and options in /home/"$install_user"/.config/ScriptSettings/sync_config.sh and re-run this script"
+  eerror "No existing sync_config file found, error?"
+fi
+#
+#
+#create abcde conf location
+if [[ ! -z "$abcde_loc" ]]; then
+  if [[ -d $abcde_loc ]]; then
+    edebug "abcde location already exists"
   else
-    eerror "No original or template .config folder or template located"
-    exit 1
+    edebug "abcde location given, creating"
+    sudo -u $install_user mkdir -p
+    if $? -ne 0; then
+      eerror "not able to create abcde location"
+      exit 66
+    fi
   fi
 fi
-abcde_conf_create
+#create abcde conf
+if [[ ! -z "$abcde_loc" ]]; then
+  abcde_conf_create
+fi
+#Install main beets app
+DEBIAN_FRONTEND=noninteractive apt-get update > /dev/null
+program_check="python-dev"
+DEBIAN_FRONTEND=noninteractive apt-get install -qq "$program_check" < /dev/null > /dev/null
+program_check="python3-pip"
+DEBIAN_FRONTEND=noninteractive apt-get install -qq "$program_check" < /dev/null > /dev/null
+sudo -u "$install_user" pip -q install --user beets
+#Install dependancies for beets plugins
+#acousticid
+sudo -u "$install_user" pip -q install pyacoustid
+#gmusic upload, still needed?
+sudo -u "$install_user" pip -q install gmusicapi
+#chroma
+program_check="libchromaprint-tools"
+prog_check_deb
 #
 #
-esilent "control scripts install script completed"
+#+-------------------+
+#+---"Script Exit"---+
+#+-------------------+
+rm -r /tmp/"$lockname"
+if [[ $? -ne 0 ]]; then
+    eerror "error removing lockdirectory"
+    exit 65
+else
+    enotify "successfully removed lockdirectory"
+fi
+esilent "$lockname completed"
 exit 0
