@@ -67,7 +67,7 @@ udev_loc="/etc/udev/rules.d/"
 sysd_loc="/etc/systemd/system/"
 #set default logging level
 verbosity=3
-version=0.3
+version=0.4
 #
 #
 #+---------------------------------------+
@@ -87,6 +87,7 @@ helpFunction () {
    echo -e "\t-S Override set verbosity to specify silent log level"
    echo -e "\t-V Override set verbosity to specify Verbose log level"
    echo -e "\t-G Override set verbosity to specify Debug log level"
+   echo -e "\t-p Specifically choose to install postfix prior to attempting to install abcde as its a requirement"
    echo -e "\t-u Use this flag to specify a user to install scripts under, eg. user foo is entered -u foo, as i made these scripts for myself the defualt user is my own"
    echo -e "\t-g Use this flag to specify a usergroup to install scripts under, eg. group bar is entered -g bar, combined with the -u flag these settings will be used as: chown foo:bar. As i made these scripts for myself the defualt group is my own"
    echo -e "\t-d Use this flag to specify the identity of the CD/DVD/BLURAY drive being used, eg. /dev/sr1 is entered -d sr1, sr0 will be the assumed default "
@@ -106,7 +107,7 @@ drive_detect () {
   cd /tmp
   if [[ $? -ne 0 ]]; then
     eerror "changing to /tmp failed, most likely this is a missing directory"
-    exit 1
+    exit 66
   else
     edebug "changed to /tmp successfully"
   fi
@@ -127,7 +128,7 @@ drive_detect () {
   chmod 644 $udev_rule
   if [[ $? -ne 0 ]]; then
     eerror "changing mode of UDEV $udev_rule file failed"
-    exit 1
+    exit 66
   else
     enotify "changing mode of UDEV $udev_rule file succeded"
   fi
@@ -135,7 +136,7 @@ drive_detect () {
   mv $udev_rule $udev_loc
   if [[ $? -ne 0 ]]; then
     eerror "moving UDEV rule $udev_rule file failed"
-    exit 1
+    exit 66
   else
     enotify "moving UDEV rule $udev_rule file succeded"
   fi
@@ -270,14 +271,14 @@ if [[ $? -ne 1 ]]; then
   enotify "abcde_flac.conf created successfully at "$abcde_loc""
 else
   eerror "abcde_flac.conf not able to be created, exiting"
-  exit 1
+  exit 66
 fi
 chown $install_user:$install_user "$abcde_loc"/abcde_flac.conf
 if [[ $? -ne 1 ]]; then
   enotify "successfully chown'd $abcde_loc/abcde_flac.conf"
 else
   eerror "chown'ing $abcde_loc/abcde_flac.conf failed, exiting"
-  exit 1
+  exit 66
 fi
 }
 #
@@ -302,7 +303,7 @@ check_folder () {
 #+------------------------+
 #+---"Get User Options"---+
 #+------------------------+
-while getopts ":SVGHhu:g:d:" opt
+while getopts ":SVGHhpu:g:d:" opt
 do
     case "${opt}" in
         S) verbosity=$silent_lvl
@@ -311,6 +312,8 @@ do
         edebug "-V specified: Verbose mode";;
         G) verbosity=$dbg_lvl
         edebug "-G specified: Debug mode";;
+        p) post_fix_install=1
+        edebug "-p specified: installing postfix defaults";;
         u) user_install=${OPTARG}
         edebug "-u specified: User set as: $user_install";;
         g) group_install=${OPTARG}
@@ -414,6 +417,13 @@ fi
 #+--------------------------------------------+
 #+---"Check for necessary programs / tools"---+
 #+--------------------------------------------+
+#post fix if opted for
+if [[ ! -v $post_fix_install ]]; then
+  edebug "post_fix install chosen, installing"
+  debconf-set-selections <<< "postfix postfix/mailname string $hostname"
+  debconf-set-selections <<< "postfix postfix/main_mailer_type string 'Local only'"
+  DEBIAN_FRONTEND=noninteractive apt-get install -qq --assume-yes postfix < /dev/null > /dev/null
+fi
 #abcde
 program_check="abcde"
 prog_check
@@ -551,6 +561,8 @@ else
   eerror "No existing sync_config file found, error?"
 fi
 #
+#add
+echo PATH="$PATH:/home/$install_user/.local/bin" >> /home/$install_user/.bashrc
 #
 #create abcde conf location
 if [[ ! -z "$abcde_loc" ]]; then
@@ -558,8 +570,8 @@ if [[ ! -z "$abcde_loc" ]]; then
     edebug "abcde location already exists"
   else
     edebug "abcde location given, creating"
-    sudo -u $install_user mkdir -p
-    if $? -ne 0; then
+    sudo -u $install_user mkdir -p "$abcde_loc"
+    if [[ $? -ne 0 ]]; then
       eerror "not able to create abcde location"
       exit 66
     fi
