@@ -419,8 +419,9 @@ fi
 #+--------------------------------------------+
 #post fix if opted for
 if [[ ! -v $post_fix_install ]]; then
+  host_name=$(hostname)
   edebug "post_fix install chosen, installing"
-  debconf-set-selections <<< "postfix postfix/mailname string $hostname"
+  debconf-set-selections <<< "postfix postfix/mailname string $host_name"
   debconf-set-selections <<< "postfix postfix/main_mailer_type string 'Local only'"
   DEBIAN_FRONTEND=noninteractive apt-get install -qq --assume-yes postfix < /dev/null > /dev/null
 fi
