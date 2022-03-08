@@ -517,7 +517,7 @@ fi
 edebug "feature name is: $feature_name"
 #
 #CLEAN THE FOUND LOCAL TITLE TO SEARCH WITH
-#extrat '_' in name
+#extract '_' in name
 field_count="${feature_name//[^_]}"
 edebug "delimeter pick is: $field_count"
 #count them
@@ -646,53 +646,191 @@ jq '.[].TitleList[].AudioList[].Description' main_feature_scan_trimmed.json > pa
 #+----------------------------------+
 #First we search the file for the line number of our preferred source because line number = track number of the audio
 #these tests produce boolean returns
-#First lets test for uncompressed LPCM
-BD_lpcm=$(grep -hn "BD LPCM" parsed_audio_tracks | cut -c1)
-[[ ! -z "$BD_lpcm" ]] && edebug "BD LPCM detected, track: $BD_lpcm" || edebug "BD LPCM not detected"
-#Check for True_HD
-True_HD=$(grep -hn "TrueHD" parsed_audio_tracks | cut -c1)
-[[ ! -z "$True_HD" ]] && edebug "True HD detected, track: $True_HD" || edebug "True_HD not detected"
-#Now lets test for DTS-HD
-Dts_hd=$(grep -hn "DTS-HD" parsed_audio_tracks)
-Dts_hd=$(echo $Dts_hd | cut -c1)
-[[ ! -z "$Dts_hd" ]] && edebug "DTS-HD detected, track: $Dts_hd" || edebug "DTS-HD not detected"
-#Now lets test for DTS
-Dts=$(grep -hn "(DTS)" parsed_audio_tracks)
-Dts=$(echo $Dts | cut -c1)
-[[ ! -z "$Dts" ]] && edebug "DTS detected, track: $Dts" || edebug "DTS not detected"
-#Finally lets test for AAC
-Ac3=$(grep -hn "AC3" parsed_audio_tracks)
-Ac3=$(echo $Ac3 | cut -c1)
-[[ ! -z "$Ac3" ]] && edebug "AC3 detected, track: $Ac3" || edebug "AC3 not detected"
 #
+#set up arrays we will use
+bdlpcm_array=()
+truehd_array=()
+dtshd_array=()
+dts_array=()
+ac3_51_array=()
+ac3_array=()
+#read file into the array
+mapfile -t parsed_audio_array <parsed_audio_tracks
+#show ray array contents once read in from file
+edebug "array contents are: ${parsed_audio_array[@]}"
+#for each array entry search for specific set text, if found add that entry to relevant array defined above
+for ((i=0; i<${#parsed_audio_array[@]}; i++)); do
+  #"(BD LPCM)"
+  if [[ ${parsed_audio_array[$i]} =~ (^|[[:space:]])"(BD LPCM)"($|[[:space:]]) ]]; then
+    bdlpcm_track[i]=$((i+1))
+    edebug "Bluray uncompressed LPCM detected at element $i, audio track: ${bdlpcm_track[i]}"
+    bdlpcm_array+=( ${bdlpcm_track[i]} )
+  fi
+  #"(TrueHD)"
+  if [[ ${parsed_audio_array[$i]} =~ (^|[[:space:]])"(TrueHD)"($|[[:space:]]) ]]; then
+    truehd_track[i]=$((i+1))
+    edebug "TrueHD detected at element $i, audio track: ${truehd_track[i]}"
+    truehd_array+=( ${truehd_track[i]} )
+  fi
+  #"(DTS-HD MA)"
+  if [[ ${parsed_audio_array[$i]} =~ (^|[[:space:]])"(DTS-HD"[[:space:]]"MA)"($|[[:space:]]) ]]; then
+    dtshd_track[i]=$((i+1))
+    edebug "DTS-HD detected at element $i, audio track: ${dtshd_track[i]}"
+    dtshd_array+=( ${dtshd_track[i]} )
+  fi
+  #"(DTS)"
+  if [[ ${parsed_audio_array[$i]} =~ (^|[[:space:]])"(DTS)"($|[[:space:]]) ]]; then
+    dts_track[i]=$((i+1))
+    edebug "DTS detected at element $i, audio track: ${dts_track[i]}"
+    dts_array+=( ${dts_track[i]} )
+  fi
+  #"(AC3) (5.1"
+  if [[ ${parsed_audio_array[$i]} =~ (^|[[:space:]])"(AC3)"[[:space:]]"(5.1"($|[[:space:]]) ]]; then
+    ac3_51_track[i]=$((i+1))
+    edebug "AC3 5.1 detected at element $i, audio track: ${ac3_51_track[i]}"
+    ac3_51_array+=( ${ac3_51_track[i]} )
+  fi
+  if [[ ${parsed_audio_array[$i]} =~ (^|[[:space:]])"(AC3)"[[:space:]]"(2.0"($|[[:space:]]) ]]; then
+    ac3_track[i]=$((i+1))
+    edebug "AC3 2.0 detected at element $i, audio track: ${ac3_track[i]}"
+    ac3_array+=( ${ac3_track[i]} )
+  fi
+done
+#
+#construct messaging text and set *audio_track_list. If more than one entry seperate them by ', '
+#so they will be format required by handbrake for multiple tracks, set variable single value or to empty if no tracks found.
+#"*BD LPCM*"
+if [[ ${#bdlpcm_array[@]} -gt 0 ]]; then
+  if [[ ${#bdlpcm_array[@]} -gt 1 ]]; then
+    bdlpcm_text="tracks:"
+    bdlpcm_track_list=${bdlpcm_array[@]}
+    bdlpcm_track_list=${bdlpcm_track_list// /, }
+    edebug "BD LPCM detected on $bdlpcm_text $bdlpcm_track_list"
+  else
+    bdlpcm_text="BD LPCM detected on track:"
+    bdlpcm_track_list=${bdlpcm_array[@]}
+    edebug "BD LPCM detected on $bdlpcm_text $bdlpcm_track_list"
+  fi
+else
+  edebug "NO BD LPCM tracks detected"
+  bdlpcm_track_list=
+fi
+#
+#"*TrueHD*"
+if [[ ${#truehd_array[@]} -gt 0 ]]; then
+  if [[ ${#truehd_array[@]} -gt 1 ]]; then
+    truehd_text="tracks:"
+    truehd_track_list=${truehd_array[@]}
+    truehd_track_list=${truehd_track_list// /, }
+    edebug "TrueHD detected on $truehd_text $truehd_track_list"
+  else
+    truehd_text="track:"
+    truehd_track_list=${truehd_array[@]}
+    edebug "TrueHD detected on $truehd_text $truehd_track_list"
+  fi
+else
+  edebug "NO TrueHD tracks detected"
+  dts_track_list=
+fi
+#
+#"*DTS-HD*"
+if [[ ${#dtshd_array[@]} -gt 0 ]]; then
+  if [[ ${#dtshd_array[@]} -gt 1 ]]; then
+    dtshd_text="tracks:"
+    dtshd_track_list=${dtshd_array[@]}
+    dtshd_track_list=${dtshd_track_list// /, }
+    edebug "DTS-HD detected on $dtshd_text $dtshd_track_list"
+  else
+    dtshd_text="track:"
+    dtshd_track_list=${dtshd_array[@]}
+    edebug "DTS-HD detected on $dtshd_text $dtshd_track_list"
+  fi
+else
+  edebug "NO DTS-HD tracks detected"
+  dtshd_track_list=
+fi
+#
+#"*DTS*"
+if [[ ${#dts_array[@]} -gt 0 ]]; then
+  if [[ ${#dts_array[@]} -gt 1 ]]; then
+    dts_text="tracks:"
+    dts_track_list=${dts_array[@]}
+    dts_track_list=${dts_track_list// /, }
+    edebug "DTS detected on $dts_text $dts_track_list"
+  else
+    dts_text="track:"
+    dts_track_list=${dts_array[@]}
+    edebug "DTS detected on $dts_text $dts_track_list"
+  fi
+else
+  edebug "NO DTS tracks detected"
+  dts_track_list=
+fi
+#
+#"*AC3 5.1*"
+if [[ ${#ac3_51_array[@]} -gt 0 ]]; then
+  if [[ ${#ac3_51_array[@]} -gt 1 ]]; then
+    ac3_51_text="tracks:"
+    ac3_51_track_list=${ac3_51_array[@]}
+    ac3_51_track_list=${ac3_51_track_list// /, }
+    edebug "AC3 5.1 detected on $ac3_51_text $ac3_51_track_list"
+  else
+    ac3_51_text="track:"
+    ac3_51_track_list=${ac3_51_array[@]}
+    edebug "AC3 5.1 detected on $ac3_51_text $ac3_51_track_list"
+  fi
+else
+  edebug "NO AC3 5.1 tracks detected"
+  ac3_51_track_list=
+fi
+#
+#"*AC3 2.0*"
+if [[ ${#ac3_array[@]} -gt 0 ]]; then
+  if [[ ${#ac3_array[@]} -gt 1 ]]; then
+    ac3_text="tracks:"
+    ac3_track_list=${ac3_array[@]}
+    ac3_track_list=${ac3_track_list// /, }
+    edebug "AC3 detected on $ac3_text $ac3_track_list"
+  else
+    ac3_text="track:"
+    ac3_track_list=${ac3_array[@]}
+    edebug "AC3 detected on $ac3_text $ac3_track_list"
+  fi
+else
+  edebug "NO AC3 tracks detected, error??"
+  ac3_track_list=
+fi
 #
 #+------------------------------+
 #+---"Determine 'Best' Audio"---+
 #+------------------------------+
 #Now we make some decisons about audio choices
-# if its present always prefer: TrueHD, if not; DTS-HD, if not; BD LPCM; if not DTS. if none of the above then AC3,
-if [[ ! -z "$True_HD" ]]; then #true = TrueHD
-  selected_audio_track=$(echo $True_HD)
-  edebug "Selecting True_HD audio, track $True_HD"
-elif [[ ! -z "$True_HD" ]] && [[ ! -z "$Dts_hd" ]]; then #true false = TrueHD
-  selected_audio_track=$(echo $True_HD)
-  edebug "Selecting True_HD audio, track $True_HD"
-elif [[ -z "$True_HD" ]] && [[ ! -z "$Dts_hd" ]]; then #false true = DTS-HD
-  selected_audio_track=$(echo $Dts_hd)
-  edebug "Selecting DTS-HD audio, track $Dts_hd"
-elif [[ ! -z "$BD_lpcm" ]] && [[ -z "$True_HD" ]] && [[ -z "$Dts_hd" ]]; then #true false false = BD LPCM
-  selected_audio_track=$(echo $BD_lpcm)
-  edebug "Selecting BD LPCM audio, track $BD_lpcm"
-elif [[ -z "$True_HD" ]] && [[ -z "$Dts_hd" ]] && [[ -z "$BD_lpcm" ]] && [[ ! -z "$Dts" ]]; then #false false false true = DTS
-  selected_audio_track=$(echo $Dts)
-  edebug "Selecting DTS audio, track $Dts"
-elif [[ -z "$True_HD" ]] && [[ -z "$Dts_hd" ]] && [[ -z "$BD_lpcm" ]] && [[ -z "$Dts" ]]; then #false false false false = AC3 (default)
-  selected_audio_track=1
-  edebug "no matches for audio types, defaulting to track 1"
+# if its present always prefer, TrueHD; if not, DTS-HD, if not, BD LPCM; if not, DTS; if not, AC3 5.1, and if none of these AC3 2.0 track"
+if [[ ! -z "$truehd_track_list" ]]; then #true = TrueHD
+  selected_audio_track=$truehd_track_list
+  edebug "Selecting True_HD audio on $truehd_text $truehd_track_list"
+elif [[ ! -z "$truehd_track_list" ]] && [[ ! -z "$dtshd_track_list" ]]; then #true false = TrueHD
+  selected_audio_track=$truehd_track_list
+  edebug "Selecting True_HD audio on $truehd_text $truehd_track_list"
+elif [[ -z "$truehd_track_list" ]] && [[ ! -z "$dtshd_track_list" ]]; then #false true = DTS-HD
+  selected_audio_track=$dtshd_track_list
+  edebug "Selecting DTS-HD audio on $dtshd_text $dtshd_track_list"
+elif [[ ! -z "$bdlpcm_track_list" ]] && [[ -z "$truehd_track_list" ]] && [[ -z "$dtshd_track_list" ]]; then #true false false = BD LPCM
+  selected_audio_track=$bdlpcm_track_list
+  edebug "Selecting BD LPCM audio on $bdlpcm_text $bdlpcm_track_list"
+elif [[ -z "$truehd_track_list" ]] && [[ -z "$dtshd_track_list" ]] && [[ -z "$bdlpcm_track_list" ]] && [[ ! -z "$dts_track_list" ]]; then #false false false true = DTS
+  selected_audio_track=$dts_track_list
+  edebug "Selecting DTS audio on $dts_text $dts_track_list"
+elif [[ -z "$truehd_track_list" ]] && [[ -z "$dtshd_track_list" ]] && [[ -z "$bdlpcm_track_list" ]] && [[ -z "$dts_track_list" ]] && [[ ! -z "$ac3_51_track_list" ]]; then #false, false, flase, false = AC3 5.1
+  selected_audio_track=$ac3_51_track_list
+  edebug "Selecting AC3 5.1 audio on $ac3_51_text $ac3_51_track_list"
+elif [[ -z "$truehd_track_list" ]] && [[ -z "$dtshd_track_list" ]] && [[ -z "$bdlpcm_track_list" ]] && [[ -z "$dts_track_list" ]] && [[ -z "$ac3_51_track_list" ]]; then #false false false false false false = AC3 (default)
+  selected_audio_track=${ac3_array[0]}
+  edebug "no matches for preferred audio types, defaulting to first AC3 track: ${ac3_array[0]}"
 fi
 #
 #insert the audio selection into the audio_options variable, something different wiht BD_lpcm if selected as cannot be passed thru
-if [[ ! -z $BD_lpcm ]]; then
+if [[ ! -z $bdlpcm_track_list ]]; then
   audio_options="-a $selected_audio_track -E flac24 --mixdown 5point1"
 else
   audio_options="-a $selected_audio_track -E copy --audio-copy-mask dtshd,truehd,dts,flac"
@@ -742,7 +880,6 @@ edebug "Final HandBrakeCLI Options are: $options -i $source_loc $source_options 
 #+---"Carry Out Encoding"---+
 #+--------------------------+
 # Set out how to get information for progress bar, see notes in helper_script.sh
-
 #
 if [[ -z $rip_only ]]; then
   get_max_progress () {
