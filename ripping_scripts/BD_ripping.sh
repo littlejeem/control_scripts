@@ -352,6 +352,7 @@ esilent "$lockname started"
 #+---"Display some info about script"---+
 #+--------------------------------------+
 edebug "Version of $scriptlong is: $version"
+edebug "Version of helper_script is: $helper_version"
 edebug "PID is $script_pid"
 #
 #
@@ -484,7 +485,8 @@ subtitle_options="-N eng -F scan"
 #this step is vital, otherwise the files below are created whereever the script is run from and will fail
 cd "$working_dir/temp/$bluray_name" || { edebug "Failure changing to working directory temp"; exit 65; }
 #
-#Grap all titles from source
+#Grab all titles from source
+edebug "scanning source location for titles..."
 HandBrakeCLI --json -i $source_loc -t 0 --main-feature &> all_titles_scan.json
 #search file for identified main feature
 auto_found_main_feature=$(grep -w "Found main feature title" all_titles_scan.json)
@@ -575,23 +577,120 @@ if [[ "$omdb_title_result" = *'"Title":"'* ]]; then
   #strip out 'min'
   omdb_runtime_result=${omdb_runtime_result%????}
   edebug "omdb runtime is (mins): $omdb_runtime_result ..."
-  #convert to 'secs'
-  secs=$((omdb_runtime_result*60))
-  edebug "...equal to (secs): $secs"
-  #use function to convert seconds to desired runtime format
-  edebug "converting to runtime format..."
-  runtime_check=$(convert_secs_hr_min)
-  edebug "...runtime is: $runtime_check (hh:mm). Checking titles containing this runtime"
-  #check all_titles_scan.json for titles containing runtime
-  title1=$(grep -B 2 $runtime_check all_titles_scan.json | awk 'NR==1' | cut -d ' ' -f 5)
-  title2=$(grep -B 2 $runtime_check all_titles_scan.json | awk 'NR==5' | cut -d ' ' -f 5)
-  #strip down to just titles value (track), not time!)
-  if [[ ! -z "$title1" ]]; then
-    edebug "Title(s) matching runtime is: $title1"
+  edebug "...converting to hh:mm:ss"
+  omdb_runtime_result=$((omdb_runtime_result*60))
+  secs=$omdb_runtime_result
+  omdb_runtime_result=$(convert_secs_hr_min)
+  edebug "omdb runtime in hh:mm:ss format is: $omdb_runtime_result"
+  #
+  #START ARRAY WORK TO ANALYSE TRACK TIMES AND ROUND UP SO AS TO COMPART TO OMDB TIMES
+  track_times_array=()
+  array_matching_track=()
+  #find all results matching MPLS in all_titles_scan.json and save the time from the line afterwards...
+  #...remove all blank lines and those with -- in them and save result list to grepped_times file
+  grep -A 1 MPLS all_titles_scan.json | cut -d ' ' -f 5 | cut -d ' ' -f 1 | awk 'NF' | sed '/--/d' > grepped_times
+  #remove last line of file (auto_found_main_features time)
+  sed -i '$d' grepped_times
+  #remove last line of file (auto_found_main_features title)
+  sed -i '$d' grepped_times
+  #read in grepped file to array
+  mapfile -t track_times_array <grepped_times
+  #time conversion work in array
+  for ((i=0; i<${#track_times_array[@]}; i++)); do
+    #TRACK DETAILS
+    track_num=$((i+1))
+    echo "Running time of track $track_num is: ${track_times_array[$i]}"
+    #
+    #SECONDS
+    track_secs_old=$(echo ${track_times_array[$i]} | cut -d ':' -f 3)
+    #remove padding zeros to reduce 'base 8 errors'
+    #track_secs_new=${track_secs_old##+(0)}
+    track_secs_new=${track_secs_old#0}
+    if [[ $track_secs_new -ge 31 ]]; then
+      echo "rounding up seconds"
+      track_secs_new=0
+      inc_mins=1
+    else
+      inc_mins=
+    fi
+    track_secs_new=$(printf "%02d\n" $track_secs_new)
+    echo "seconds = $track_secs_new"
+    #
+    #MINS
+    track_mins_old=$(echo ${track_times_array[$i]} | cut -d ':' -f 2)
+    #remove padding zeros to reduce 'base 8 errors'
+    track_mins_new=${track_mins_old#0}
+    echo "track_mins being used are: $track_mins_new"
+    if [[ ! -z $inc_mins ]]; then
+      echo "track_mins_new before rounding = $track_mins_new"
+      track_mins_new=$((track_mins_new+1))
+      echo "track_mins after rounding = $track_mins_new"
+    fi
+    if [[ $track_mins_new -ge 59 ]]; then
+      echo "rounding up minutes"
+      track_mins_new=0
+      inc_hours=1
+    else
+      inc_hours=
+    fi
+    track_mins_new=$(printf "%02d\n" $track_mins_new)
+    echo "mins = $track_mins_new"
+    #
+    #HOURS
+    track_hours_old=$(echo ${track_times_array[$i]} | cut -d ':' -f 1)
+    #remove padding zeros to reduce 'base 8 errors'
+    #track_hours_new=${track_hours_old##+(0)}
+    track_hours_new=${track_hours_old#0}
+    if [[ ! -z $inc_hours_new ]]; then
+      echo "track_hours before rounding = $track_hours_new"
+      track_hours_new=$((track_hours_new+1))
+      echo "track_hours_new after rounding = $track_hours_new"
+    fi
+    if [[ $track_hours_new -ge 59 ]]; then
+      echo "really, 60 hour film?!!!"
+      track_hours=0
+    fi
+    track_hours_new=$(printf "%02d\n" $track_hours_new)
+    echo "hours = $track_hours_new"
+    #
+    # COMPARISON WORK
+    local_track_time=$(echo "$track_hours_new:$track_mins_new:$track_secs_new")
+    echo "new track time is: $local_track_time"
+    echo "omdb_runtime is: $omdb_runtime_result"
+    if [[ "$local_track_time" = "$omdb_runtime_result" ]]; then
+      echo "track matched, using"
+      array_matching_track+=( $track_num )
+    else
+      echo "no match"
+    fi
+  done
+  edebug "array_matching_track contents are: ${array_matching_track[@]}"
+  edebug "element 1 = ${array_matching_track[0]}"
+  edebug "element 2 = ${array_matching_track[1]}"
+  #
+  if [[ ${#array_matching_track[@]} -gt 0 ]]; then
+    if [[ ${#array_matching_track[@]} -gt 1 ]]; then
+      matching_track_text="Matching runtime tracks detected as:"
+      matching_track_list=${array_matching_track[@]}
+      edebug "$matching_track_text $matching_track_list"
+      for ((i=0, j=1; i<${#array_matching_track[@]}; i++, j++)); do
+        declare "title_$j"="${array_matching_track[$i]}"
+        edebug "title_$j is set as: $title_$j"
+      done
+    else
+      matching_track_text="Matching runtime track detected as:"
+      matching_track_list=${array_matching_track[@]}
+      edebug "$matching_track_text $dts_track_list"
+      for ((i=0, j=1; i<${#array_matching_track[@]}; i++, j++)); do
+        declare "title_$j"="${array_matching_track[$i]}"
+        edebug "title_$j is set as: $title_$j"
+      done
+    fi
+  else
+    edebug "No title track matching runtime found"
+    matching_track_list=
   fi
-  if [[ ! -z "$title2" ]]; then
-    edebug "Title(s) matching runtime is: $title2"
-  fi
+  #
 elif [[ "$omdb_title_result" = *'"Error":"No API key provided."'* ]]; then
   edebug "online search failed not doing extra stuff"
   omdb_title_result=
@@ -611,31 +710,24 @@ else
 fi
 #
 #TEST RESULTS TO SEE WHICH TO CHOOSE AND IF DIFFERENT TO OUT AUTO FIND TITLE WE NEED TO RECREATE main_feature_scan.json BEFORE AUDIO CHECK
-if [[ -z "$title1" && -z "$title2" ]]; then
+if [[ -z "$title_1" ]] && [[ -z "$title_2" ]]; then
   edebug "no online data to use, so using local data"
-elif [[ "$title1" != "$auto_found_main_feature" && "$title2" != "$auto_found_main_feature" ]]; then
-  edebug "online check resulted in titles $title1 & $title2, matching online runtime but NOT, handbrakes automatically found main feature: $auto_found_main_feature, using title2"
+elif [[ ! -z "$title_1" ]] && [[ ! -z "$title_2" ]]; then
+  enotify "online check resulted in both titles (title_1: $title_1 & title_2: $title_2) matching handbrakes automatically found main feature: $auto_found_main_feature. Using title_2"
   #we choose title 2 when there are 2 detected as this better than 50% right most of the time imo.
   mv main_feature_scan.json main_feature_scan.json.original
-  auto_found_main_feature=$(echo $title2)
+  auto_found_main_feature=$(echo $title_2)
   HandBrakeCLI --json -i $source_loc -t $auto_found_main_feature --scan 1> main_feature_scan.json 2> /dev/null
   clean_main_feature_scan
-elif [[ "$title1" == "$auto_found_main_feature" && "$title2" == "$auto_found_main_feature" ]]; then
-  edebug "online check resulted in both titles, matching handbrakes automatically found main feature: $auto_found_main_feature. Using title2"
-  #we choose title 2 when there are 2 detected as this better than 50% right most of the time imo.
+elif [[ -z "$title_1" ]] && [[ ! -z "$title_2" ]]; then #title 1 doesnt match but title 2 does, use it.
+  edebug "online check resulted in title_2, matching handbrakes automatically found main feature $auto_found_main_feature, using title_2"
   mv main_feature_scan.json main_feature_scan.json.original
-  auto_found_main_feature=$(echo $title2)
+  auto_found_main_feature=$(echo $title_2)
   HandBrakeCLI --json -i $source_loc -t $auto_found_main_feature --scan 1> main_feature_scan.json 2> /dev/null
   clean_main_feature_scan
-elif [[ "$title1" != "$auto_found_main_feature" && "$title2" == "$auto_found_main_feature" ]]; then
-  edebug "online check resulted in title2, matching handbrakes automatically found main feature $auto_found_main_feature, using title2"
-  mv main_feature_scan.json main_feature_scan.json.original
-  auto_found_main_feature=$(echo $title2)
-  HandBrakeCLI --json -i $source_loc -t $auto_found_main_feature --scan 1> main_feature_scan.json 2> /dev/null
-  clean_main_feature_scan
-elif [[ "$title1" == "$auto_found_main_feature" && "$title2" != "$auto_found_main_feature" ]]; then
-  #then title 1 is set but if $title2 is valid $title2 is set
-  edebug "${red_highlight} online check resulted in only title1 matching handbrakes automatically found main feature, using"
+elif [[ ! -z "$title_1" ]] && [[ -z "$title_2" ]]; then
+  #then title 1 is set but if $title_2 is valid $title_2 is set
+  edebug "online check resulted in only title_1: $title_1 matching handbrakes automatically found main feature, so using"
 fi
 #
 #EXTRACT AUDIO TRACKS FROM $main_feature_scan_trimmed into parsed_audio_tracks
@@ -704,7 +796,7 @@ if [[ ${#bdlpcm_array[@]} -gt 0 ]]; then
   if [[ ${#bdlpcm_array[@]} -gt 1 ]]; then
     bdlpcm_text="tracks:"
     bdlpcm_track_list=${bdlpcm_array[@]}
-    bdlpcm_track_list=${bdlpcm_track_list// /, }
+    bdlpcm_track_list=${bdlpcm_track_list// /,}
     edebug "BD LPCM detected on $bdlpcm_text $bdlpcm_track_list"
   else
     bdlpcm_text="BD LPCM detected on track:"
@@ -721,7 +813,7 @@ if [[ ${#truehd_array[@]} -gt 0 ]]; then
   if [[ ${#truehd_array[@]} -gt 1 ]]; then
     truehd_text="tracks:"
     truehd_track_list=${truehd_array[@]}
-    truehd_track_list=${truehd_track_list// /, }
+    truehd_track_list=${truehd_track_list// /,}
     edebug "TrueHD detected on $truehd_text $truehd_track_list"
   else
     truehd_text="track:"
@@ -738,7 +830,7 @@ if [[ ${#dtshd_array[@]} -gt 0 ]]; then
   if [[ ${#dtshd_array[@]} -gt 1 ]]; then
     dtshd_text="tracks:"
     dtshd_track_list=${dtshd_array[@]}
-    dtshd_track_list=${dtshd_track_list// /, }
+    dtshd_track_list=${dtshd_track_list// /,}
     edebug "DTS-HD detected on $dtshd_text $dtshd_track_list"
   else
     dtshd_text="track:"
@@ -755,7 +847,7 @@ if [[ ${#dts_array[@]} -gt 0 ]]; then
   if [[ ${#dts_array[@]} -gt 1 ]]; then
     dts_text="tracks:"
     dts_track_list=${dts_array[@]}
-    dts_track_list=${dts_track_list// /, }
+    dts_track_list=${dts_track_list// /,}
     edebug "DTS detected on $dts_text $dts_track_list"
   else
     dts_text="track:"
@@ -772,7 +864,7 @@ if [[ ${#ac3_51_array[@]} -gt 0 ]]; then
   if [[ ${#ac3_51_array[@]} -gt 1 ]]; then
     ac3_51_text="tracks:"
     ac3_51_track_list=${ac3_51_array[@]}
-    ac3_51_track_list=${ac3_51_track_list// /, }
+    ac3_51_track_list=${ac3_51_track_list// /,}
     edebug "AC3 5.1 detected on $ac3_51_text $ac3_51_track_list"
   else
     ac3_51_text="track:"
@@ -789,7 +881,7 @@ if [[ ${#ac3_array[@]} -gt 0 ]]; then
   if [[ ${#ac3_array[@]} -gt 1 ]]; then
     ac3_text="tracks:"
     ac3_track_list=${ac3_array[@]}
-    ac3_track_list=${ac3_track_list// /, }
+    ac3_track_list=${ac3_track_list// /,}
     edebug "AC3 detected on $ac3_text $ac3_track_list"
   else
     ac3_text="track:"
