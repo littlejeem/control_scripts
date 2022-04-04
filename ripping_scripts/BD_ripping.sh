@@ -379,6 +379,13 @@ edebug "destination for Rips is: $rip_dest"
 edebug "destination for Encodes is: $encode_dest"
 #
 #
+#+--------------------------------+
+#+---"Any additional variables"---+
+#+--------------------------------+
+banned_list="™ Blu-ray blu-ray Blu-Ray - TITLE_1 DISC_1 Blu-ray™"
+banned_name_endings="- @ :"
+#
+#
 #+----------------------------+
 #+---"Main Script Contents"---+
 #+----------------------------+
@@ -552,12 +559,25 @@ else
   edebug "Array element 1 not a number so using"
 fi
 #
+if [[ $banned_name_endings =~ (^|[[:space:]])${title_array[-1]}($|[[:space:]]) ]]; then
+  edebug "last of array matche the banned ending element list, removing from array"
+  unset title_array[-1]
+  feature_name=( "${title_array[*]}" )
+else
+  edebug "last element in array passes checks, using"
+fi
+edebug "online feature name check now set for: $feature_name"
+#
+feature_name=$(echo "${title_array[*]}")
+feature_name_prep="${feature_name//_/ }"
+edebug "$feature_name_prep"
 # do some work to make the array result acceptable for a http api request, replace ' ' with '+'
-feature_name_prep="${feature_name// /+}"
+feature_name_prep="${feature_name_prep// /+}"
+edebug "$feature_name_prep"
 #create http segment in a variable so that individual variables don't need expanding in curl request, it doesn't work!
 http_construct="http://www.omdbapi.com/?t=$feature_name_prep&apikey=$omdb_apikey"
 #
-# RUN ONLINE QUERY
+#run online query
 edebug "http_construct is: $http_construct"
 edebug "Querying omdb..."
 #omdb_title_result=$(curl -sX GET --header "Accept: */*" "http://www.omdbapi.com/?t=${feature_name}&apikey=${omdb_apikey}")
