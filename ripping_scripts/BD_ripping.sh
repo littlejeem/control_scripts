@@ -541,6 +541,13 @@ title_array=() # declare an empty array; same as: declare -a groups
 #for i in {1..5..1}; do
 for ((i=1;i<=field_count;i++)); do
   title_array[i]=$(echo $feature_name | cut -d '_' -f $i)
+  edebug "element is: $i, value is: ${title_array[i]}"
+  if [[ $banned_list =~ (^|[[:space:]])${title_array[i]}($|[[:space:]]) ]]; then
+    edebug "element matches banned list removing from array"
+    unset title_array[i]
+  else
+    edebug "valid title content, using"
+  fi
 done
 #
 # Print the resulting array's elements.
@@ -563,10 +570,10 @@ if [[ $banned_name_endings =~ (^|[[:space:]])${title_array[-1]}($|[[:space:]]) ]
   edebug "last of array matche the banned ending element list, removing from array"
   unset title_array[-1]
   feature_name=( "${title_array[*]}" )
+  edebug "online feature name check now set for: $feature_name"
 else
   edebug "last element in array passes checks, using"
 fi
-edebug "online feature name check now set for: $feature_name"
 #
 feature_name=$(echo "${title_array[*]}")
 feature_name_prep="${feature_name//_/ }"
