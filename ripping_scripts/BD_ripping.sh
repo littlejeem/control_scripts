@@ -156,7 +156,7 @@ convert_secs_hr_min () {
   hour=`seq -w 00 $hour | tail -n 1`
   min=`seq -w 00 $min | tail -n 1`
   sec=`seq -w 00 $sec | tail -n 1`
-  printf "$hour:$min"
+  printf "$hour:$min:$sec"
 }
 #
 clean_main_feature_scan () {
@@ -626,7 +626,7 @@ if [[ "$omdb_title_result" = *'"Title":"'* ]]; then
   for ((i=0; i<${#track_times_array[@]}; i++)); do
     #TRACK DETAILS
     track_num=$((i+1))
-    echo "Running time of track $track_num is: ${track_times_array[$i]}"
+    edebug "Running time of track $track_num is: ${track_times_array[$i]}"
     #
     #SECONDS
     track_secs_old=$(echo ${track_times_array[$i]} | cut -d ':' -f 3)
@@ -634,34 +634,34 @@ if [[ "$omdb_title_result" = *'"Title":"'* ]]; then
     #track_secs_new=${track_secs_old##+(0)}
     track_secs_new=${track_secs_old#0}
     if [[ $track_secs_new -ge 31 ]]; then
-      echo "rounding up seconds"
+      edebug "rounding up seconds"
       track_secs_new=0
       inc_mins=1
     else
       inc_mins=
     fi
     track_secs_new=$(printf "%02d\n" $track_secs_new)
-    echo "seconds = $track_secs_new"
+    edebug "seconds = $track_secs_new"
     #
     #MINS
     track_mins_old=$(echo ${track_times_array[$i]} | cut -d ':' -f 2)
     #remove padding zeros to reduce 'base 8 errors'
     track_mins_new=${track_mins_old#0}
-    echo "track_mins being used are: $track_mins_new"
+    edebug "track_mins being used are: $track_mins_new"
     if [[ ! -z $inc_mins ]]; then
-      echo "track_mins_new before rounding = $track_mins_new"
+      edebug "track_mins_new before rounding = $track_mins_new"
       track_mins_new=$((track_mins_new+1))
-      echo "track_mins after rounding = $track_mins_new"
+      edebug "track_mins after rounding = $track_mins_new"
     fi
     if [[ $track_mins_new -ge 59 ]]; then
-      echo "rounding up minutes"
+      edebug "rounding up minutes"
       track_mins_new=0
       inc_hours=1
     else
       inc_hours=
     fi
     track_mins_new=$(printf "%02d\n" $track_mins_new)
-    echo "mins = $track_mins_new"
+    edebug "mins = $track_mins_new"
     #
     #HOURS
     track_hours_old=$(echo ${track_times_array[$i]} | cut -d ':' -f 1)
@@ -669,26 +669,26 @@ if [[ "$omdb_title_result" = *'"Title":"'* ]]; then
     #track_hours_new=${track_hours_old##+(0)}
     track_hours_new=${track_hours_old#0}
     if [[ ! -z $inc_hours_new ]]; then
-      echo "track_hours before rounding = $track_hours_new"
+      edebug "track_hours before rounding = $track_hours_new"
       track_hours_new=$((track_hours_new+1))
-      echo "track_hours_new after rounding = $track_hours_new"
+      edebug "track_hours_new after rounding = $track_hours_new"
     fi
     if [[ $track_hours_new -ge 59 ]]; then
-      echo "really, 60 hour film?!!!"
+      edebug "really, 60 hour film?!!!"
       track_hours=0
     fi
     track_hours_new=$(printf "%02d\n" $track_hours_new)
-    echo "hours = $track_hours_new"
+    edebug "hours = $track_hours_new"
     #
     # COMPARISON WORK
     local_track_time=$(echo "$track_hours_new:$track_mins_new:$track_secs_new")
-    echo "new track time is: $local_track_time"
-    echo "omdb_runtime is: $omdb_runtime_result"
+    edebug "new track time is: $local_track_time"
+    edebug "omdb_runtime is: $omdb_runtime_result"
     if [[ "$local_track_time" = "$omdb_runtime_result" ]]; then
-      echo "track matched, using"
+      edebug "track matched, using"
       array_matching_track+=( $track_num )
     else
-      echo "no match"
+      edebug "no match"
     fi
   done
   edebug "array_matching_track contents are: ${array_matching_track[@]}"
