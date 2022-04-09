@@ -65,7 +65,7 @@ lockname=${scriptlong::-3} # reduces the name to remove .sh
 #remember at level 3 and lower, only esilent messages show, best to include an override in getopts
 verbosity=3
 #
-version="1.0" #
+version="1.1" #
 notify_lock="/tmp/$lockname"
 #pushover_title="NAME HERE" #Uncomment if using pushover
 #
@@ -189,7 +189,7 @@ temp_clean () {
     einfo "removing temp files..."
     if [[ -d "$working_dir/temp/$bluray_name" ]]; then
       cd "$working_dir/temp" || { edebug "Failure changing to temp working directory"; exit 65; }
-      rm -r "$working_dir/temp/$bluray_name"
+      rm -r "$bluray_name"
       einfo "...temp files removed"
     fi
   fi
@@ -382,7 +382,7 @@ edebug "destination for Encodes is: $encode_dest"
 #+--------------------------------+
 #+---"Any additional variables"---+
 #+--------------------------------+
-banned_list="™ Blu-ray blu-ray Blu-Ray - TITLE_1 DISC_1 Blu-ray™"
+banned_list="™ Blu-ray blu-ray Blu-Ray TITLE_1 DISC_1 Blu-ray™"
 banned_name_endings="- @ :"
 #
 #
@@ -928,24 +928,31 @@ fi
 if [[ ! -z "$truehd_track_list" ]]; then #true = TrueHD
   selected_audio_track=$truehd_track_list
   edebug "Selecting True_HD audio on $truehd_text $truehd_track_list"
+  audio_codec="TrueHD"
 elif [[ ! -z "$truehd_track_list" ]] && [[ ! -z "$dtshd_track_list" ]]; then #true false = TrueHD
   selected_audio_track=$truehd_track_list
   edebug "Selecting True_HD audio on $truehd_text $truehd_track_list"
+  audio_codec="TrueHD"
 elif [[ -z "$truehd_track_list" ]] && [[ ! -z "$dtshd_track_list" ]]; then #false true = DTS-HD
   selected_audio_track=$dtshd_track_list
   edebug "Selecting DTS-HD audio on $dtshd_text $dtshd_track_list"
+  audio_codec="DTS-HD"
 elif [[ ! -z "$bdlpcm_track_list" ]] && [[ -z "$truehd_track_list" ]] && [[ -z "$dtshd_track_list" ]]; then #true false false = BD LPCM
   selected_audio_track=$bdlpcm_track_list
   edebug "Selecting BD LPCM audio on $bdlpcm_text $bdlpcm_track_list"
+  audio_codec="FLAC"
 elif [[ -z "$truehd_track_list" ]] && [[ -z "$dtshd_track_list" ]] && [[ -z "$bdlpcm_track_list" ]] && [[ ! -z "$dts_track_list" ]]; then #false false false true = DTS
   selected_audio_track=$dts_track_list
   edebug "Selecting DTS audio on $dts_text $dts_track_list"
+  audio_codec="DTS"
 elif [[ -z "$truehd_track_list" ]] && [[ -z "$dtshd_track_list" ]] && [[ -z "$bdlpcm_track_list" ]] && [[ -z "$dts_track_list" ]] && [[ ! -z "$ac3_51_track_list" ]]; then #false, false, flase, false = AC3 5.1
   selected_audio_track=$ac3_51_track_list
   edebug "Selecting AC3 5.1 audio on $ac3_51_text $ac3_51_track_list"
+  audio_codec="AC-3"
 elif [[ -z "$truehd_track_list" ]] && [[ -z "$dtshd_track_list" ]] && [[ -z "$bdlpcm_track_list" ]] && [[ -z "$dts_track_list" ]] && [[ -z "$ac3_51_track_list" ]]; then #false false false false false false = AC3 (default)
   selected_audio_track=${ac3_array[0]}
   edebug "no matches for preferred audio types, defaulting to first AC3 track: ${ac3_array[0]}"
+  audio_codec="AC-3"
 fi
 #
 #insert the audio selection into the audio_options variable, something different wiht BD_lpcm if selected as cannot be passed thru
@@ -974,11 +981,11 @@ edebug "source options are: $source_options"
 if [[ ! -z "$working_dir" ]] && [[ ! -z "$encode_dest" ]] && [[ ! -z "$category" ]] && [[ ! -z "$omdb_title_name_result" ]] && [[ ! -z "$omdb_year_result" ]] && [[ ! -z "$container_type" ]]; then
   edebug "using online found movie title & year for naming"
   output_loc="$working_dir/$encode_dest/$category/$omdb_title_name_result ($omdb_year_result)/"
-  feature_name="${omdb_title_name_result} (${omdb_year_result}).${container_type}"
+  feature_name="${omdb_title_name_result} (${omdb_year_result}) - Bluray-1080p_Proper - $audio_codec.${container_type}"
 elif [[ ! -z "$working_dir" ]] && [[ ! -z "$encode_dest" ]] && [[ ! -z "$category" ]] && [[ -z "$omdb_title_result" ]] && [[ ! -z "$feature_name" ]] && [[ ! -z "$container_type" ]]; then
   edebug "using local data based naming"
   output_loc="$working_dir/$encode_dest/$category/$feature_name/"
-  feature_name="${feature_name}.${container_type}"
+  feature_name="${feature_name} - Bluray-1080p_Proper - $audio_codec.${container_type}"
 else
   eerror "Error setting output_loc, investigation needed"
   exit 64
