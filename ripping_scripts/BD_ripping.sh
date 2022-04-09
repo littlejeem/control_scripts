@@ -65,7 +65,7 @@ lockname=${scriptlong::-3} # reduces the name to remove .sh
 #remember at level 3 and lower, only esilent messages show, best to include an override in getopts
 verbosity=3
 #
-version="1.1" #
+version="1.2" #
 notify_lock="/tmp/$lockname"
 #pushover_title="NAME HERE" #Uncomment if using pushover
 #
@@ -243,6 +243,30 @@ clean_ctrlc () {
   fi
 }
 #
+clean_exit () {
+ if [[ ! -z "$makemkv_pid" ]]; then
+   edebug "Terminating rip"
+   kill $makemkv_pid
+   sleep 2
+ fi
+ #
+ if [[ ! -z "$handbrake_pid" ]]; then
+   edebug "Terminating encode"
+   kill $handbrake_pid
+   sleep 2
+ fi
+ #
+ if [[ -z $source_clean_override ]]; then
+   edebug "Removing source files"
+   source_clean
+ fi
+ if [[ -z $temp_clean_override ]]; then
+   edebug "removing temp files"
+   temp_clean
+ fi
+ script_exit
+}
+#
 #
 #+------------------------+
 #+---"Get User Options"---+
@@ -323,6 +347,7 @@ fi
 #+---"Trap ctrl-c"---+
 #+-------------------+
 trap clean_ctrlc SIGINT
+trap clean_exit SIGTERM
 ctrlc_count=0
 #
 #
@@ -454,7 +479,7 @@ if [[ -z "$encode_only" ]]; then
   }
   #
   edebug "final values passed to makemkvcon are: backup --decrypt --progress=$working_dir/temp/$bluray_name/$bluray_name.log -r $makemkv_drive $makemkv_out_loc"
-  edebug "${colpup}makemakv running...${colrst}"
+  esilent "${colpup}Ripping started...${colrst}"
   unit_of_measure="cycles"
   makemkvcon backup --decrypt --progress="$working_dir/temp/$bluray_name/$bluray_name.log" -r "$makemkv_drive" "$makemkv_out_loc" > /dev/null 2>&1 &
   makemkv_pid=$!
@@ -1019,7 +1044,7 @@ if [[ -z $rip_only ]]; then
     tot_progress_result=$((10#$tot_progress_result))
     echo $tot_progress_result
   }
-  edebug "${colbor}handbrake running...${colrst}"
+  esilent "${colbor}Encoding started...${colrst}"
   #HandBrakeCLI $options -i $source_loc $source_options -o $output_loc $output_options $video_options $audio_options $picture_options $filter_options $subtitle_options > /dev/null 2>&1 &
   unit_of_measure="percent"
   HandBrakeCLI $options -i $source_loc $source_options -o "${output_loc}${feature_name}" $output_options $video_options $audio_options $picture_options $filter_options $subtitle_options > "$working_dir"/temp/"$bluray_name"/handbrake.log 2>&1 &
