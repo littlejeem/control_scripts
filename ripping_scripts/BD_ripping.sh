@@ -1013,7 +1013,7 @@ elif [[ -z "$truehd_track_list" ]] && [[ -z "$dtshd_track_list" ]] && [[ -z "$bd
 fi
 #
 #insert the audio selection into the audio_options variable, something different wiht BD_lpcm if selected as cannot be passed thru
-if [[ ! -z $bdlpcm_track_list ]]; then
+if [[ $audio_codec == "FLAC" ]]; then
   audio_options="-a $selected_audio_track -E flac24 --mixdown 5point1"
 else
   audio_options="-a $selected_audio_track -E copy --audio-copy-mask dtshd,truehd,dts,flac"
