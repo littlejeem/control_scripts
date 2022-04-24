@@ -65,7 +65,7 @@ lockname=${scriptlong::-3} # reduces the name to remove .sh
 #remember at level 3 and lower, only esilent messages show, best to include an override in getopts
 verbosity=3
 #
-version="1.2" #
+version="1.3" #
 notify_lock="/tmp/$lockname"
 #pushover_title="NAME HERE" #Uncomment if using pushover
 #
@@ -75,19 +75,19 @@ notify_lock="/tmp/$lockname"
 #+-------------------------------------+
 if [[ -f /usr/local/bin/helper_script.sh ]]; then
   source /usr/local/bin/helper_script.sh
-  edebug "helper_script located, using"
+  einfo "helper_script located, using"
 else
   echo "/usr/local/bin/helper_script.sh, please correct"
 fi
 if [[ -f /usr/local/bin/config.sh ]]; then
   source /usr/local/bin/config.sh
-  edebug "helper_script located, using"
+  einfo "helper_script located, using"
 else
   echo "/usr/local/bin/config_script.sh, please correct"
 fi
 if [[ -f /usr/local/bin/omdb_key ]]; then
   source /usr/local/bin/omdb_key
-  edebug "omdb_key file found, using"
+  einfo "omdb_key file found, using"
 else
   echo "/usr/local/bin/omdb_key, please correct"
 fi
@@ -123,10 +123,10 @@ helpFunction () {
       echo -e "\t-q Manually provide the quality to encode in handbrake, eg. -q 21. default value is 19, anything lower than 17 is considered placebo"
    #
    if [ -d "/tmp/$lockname" ]; then
-     edebug "removing lock directory"
+     einfo "removing lock directory"
      rm -r "/tmp/$lockname"
    else
-     edebug "problem removing lock directory"
+     einfo "problem removing lock directory"
    fi
    exit 65 # Exit script after printing help
 }
@@ -171,14 +171,14 @@ clean_main_feature_scan () {
   sed -i '1s/^/[\n/' main_feature_scan_trimmed.json
   #and now we need to add ']' to the end of the file
   echo "]" >> main_feature_scan_trimmed.json
-  edebug "... main_feature_scan_trimmed.json created"
+  einfo "... main_feature_scan_trimmed.json created"
 }
 #
 source_clean () {
   if [[ -z "$source_clean_override" ]] && [[ -z "$rip_only" ]] && [[ -z "$encode_only" ]]; then
     einfo "removing source files..."
     if [[ -d "$makemkv_out_loc" ]]; then
-      rm -r "$makemkv_out_loc" || { edebug "Failure removing source directory"; exit 65; }
+      rm -r "$makemkv_out_loc" || { einfo "Failure removing source directory"; exit 65; }
       einfo "...source files removed"
     fi
   fi
@@ -188,7 +188,7 @@ temp_clean () {
   if [[ -z "$temp_clean_override" ]]; then
     einfo "removing temp files..."
     if [[ -d "$working_dir/temp/$bluray_name" ]]; then
-      cd "$working_dir/temp" || { edebug "Failure changing to temp working directory"; exit 65; }
+      cd "$working_dir/temp" || { einfo "Failure changing to temp working directory"; exit 65; }
       rm -r "$bluray_name"
       einfo "...temp files removed"
     fi
@@ -220,51 +220,59 @@ clean_ctrlc () {
     echo "...exiting script."
     #
     if [[ ! -z "$makemkv_pid" ]]; then
-      edebug "Terminating rip"
+      einfo "Terminating rip"
       kill $makemkv_pid
       sleep 2
     fi
     #
     if [[ ! -z "$handbrake_pid" ]]; then
-      edebug "Terminating encode"
+      einfo "Terminating encode"
       kill $handbrake_pid
       sleep 2
+      [ -d "$output_loc" ] && rm -r "$output_loc" || einfo "no output folder to delete"
     fi
     #
-    if [[ -z $source_clean_override ]]; then
-      edebug "Removing source files"
-      source_clean
-    fi
-    if [[ -z $temp_clean_override ]]; then
-      edebug "removing temp files"
-      temp_clean
-    fi
+    source_clean
+    temp_clean
     script_exit
   fi
 }
 #
 clean_exit () {
  if [[ ! -z "$makemkv_pid" ]]; then
-   edebug "Terminating rip"
+   einfo "Terminating rip"
    kill $makemkv_pid
    sleep 2
  fi
  #
  if [[ ! -z "$handbrake_pid" ]]; then
-   edebug "Terminating encode"
+   einfo "Terminating encode"
    kill $handbrake_pid
    sleep 2
+   [ -d "$output_loc" ] && rm -r "$output_loc" || einfo "no output folder to delete"
  fi
  #
- if [[ -z $source_clean_override ]]; then
-   edebug "Removing source files"
-   source_clean
- fi
- if [[ -z $temp_clean_override ]]; then
-   edebug "removing temp files"
-   temp_clean
- fi
+ source_clean
+ temp_clean
  script_exit
+}
+#
+dirty_exit () {
+  source_clean_override=1
+  temp_clean_override=1
+  if [[ ! -z "$makemkv_pid" ]]; then
+    einfo "Terminating rip"
+    kill $makemkv_pid
+    sleep 2
+  fi
+  #
+  if [[ ! -z "$handbrake_pid" ]]; then
+    einfo "Terminating encode"
+    kill $handbrake_pid
+    sleep 2
+    [ -d "$output_loc" ] && rm -r "$output_loc" || einfo "no output folder to delete"
+  fi
+  script_exit
 }
 #
 #
@@ -275,29 +283,29 @@ while getopts ":SVGHhrespct:n:q:" opt
 do
     case "${opt}" in
         S) verbosity=$silent_lvl
-        edebug "-S specified: Silent mode";;
+        einfo "-S specified: Silent mode";;
         V) verbosity=$inf_lvl
-        edebug "-V specified: Verbose mode";;
+        einfo "-V specified: Verbose mode";;
         G) verbosity=$dbg_lvl
-        edebug "-G specified: Debug mode";;
+        einfo "-G specified: Debug mode";;
         r) rip_only=1
-        edebug "rip_only selected, only ripping not encoding";;
+        einfo "-r rip_only selected, only ripping not encoding";;
         e) encode_only=1
-        edebug "encode_only selected, only encoding not ripping";;
+        einfo "-e encode_only selected, only encoding not ripping";;
         s) source_clean_override=1
-        edebug "source clean override selected, keeping SOURCE files";;
+        einfo "-s source clean override selected, keeping SOURCE files";;
         p) bar_override=1
-        edebug "bar_override selected disabling progress bars";;
+        einfo "-p bar_override selected disabling progress bars";;
         c) temp_clean_override=1
-        edebug "temp clean override selected, keeping TEMP files";;
+        einfo "-c temp clean override selected, keeping TEMP files";;
         t) title_override=${OPTARG}
-        edebug "title_override chosen, using title number: $title_override instead of automatically found main title";;
+        einfo "-t title_override chosen, using title number: $title_override instead of automatically found main title";;
         n) name_override=${OPTARG}
-        edebug "name override given, using supplied title name of: $name_override";;
+        einfo "-n name override given, using supplied title name of: $name_override";;
         q) quality_override=${OPTARG}
         if (( $quality_override >= 17 && $quality_override <= 99 )); then
           quality=$quality_override
-          edebug "quality_override chosen, using supplied Q value of: $quality_override"
+          einfo "-q quality_override chosen, using supplied Q value of: $quality_override"
         else
           eerror "quality_override must be between 17-99"
           helpFunction
@@ -318,26 +326,26 @@ fi
 tty -s
 if [[ $? = 0 ]]; then
   if [[ -z $bar_override ]]; then
-    edebug "terminal mode detected, using progress bars" #>> /home/jlivin25/bin/terminal_log_test.log
+    einfo "terminal mode detected, using progress bars" #>> /home/jlivin25/bin/terminal_log_test.log
   else
-    edebug "progress bars overridden" #>> /home/jlivin25/bin/terminal_log_test.log
+    einfo "progress bars overridden" #>> /home/jlivin25/bin/terminal_log_test.log
   fi
 else
-  edebug "not running in terminal mode, disabling progress bars" #>> /home/jlivin25/bin/terminal_log_test.log
+  einfo "not running in terminal mode, disabling progress bars" #>> /home/jlivin25/bin/terminal_log_test.log
   bar_override=1
 fi
 #
-edebug "bar_override is: $bar_override"
+einfo "bar_override is: $bar_override"
 #
 # check if media in drive and bail if not
 blockdev --getsize64 $dev_drive > /dev/null
 if [[ $? -gt 0 ]]; then
   eerror "something wrong with optical media, no media in drive??"
   if [ -d "/tmp/$lockname" ]; then
-     edebug "removing lock directory"
+     einfo "removing lock directory"
      rm -r "/tmp/$lockname"
    else
-     edebug "problem removing lock directory"
+     einfo "problem removing lock directory"
    fi
   exit 66
 fi
@@ -376,32 +384,32 @@ esilent "$lockname started"
 #+--------------------------------------+
 #+---"Display some info about script"---+
 #+--------------------------------------+
-edebug "Version of $scriptlong is: $version"
-edebug "Version of helper_script is: $helper_version"
-edebug "PID is $script_pid"
+einfo "Version of $scriptlong is: $version"
+einfo "Version of helper_script is: $helper_version"
+einfo "PID is $script_pid"
 #
 #
 #+---------------------+
 #+---"Set up script"---+
 #+---------------------+
 #Get environmental info
-edebug "INVOCATION_ID is set as: $INVOCATION_ID"
-edebug "EUID is set as: $EUID"
-edebug "PATH is: $PATH"
+einfo "INVOCATION_ID is set as: $INVOCATION_ID"
+einfo "EUID is set as: $EUID"
+einfo "PATH is: $PATH"
 #
 #
 #+-----------------------------------+
 #+---"Check settings from .config"---+
 #+-----------------------------------+
-edebug "source media drive us $dev_drive"
+einfo "source media drive us $dev_drive"
 drive_num=${dev_drive: -1}
-edebug "drive_num: $drive_num"
+einfo "drive_num: $drive_num"
 makemkv_drive="disc:$drive_num"
-edebug "makemkv drive is: $makemkv_drive"
-edebug "working directory is: $working_dir"
-edebug "category is: $category"
-edebug "destination for Rips is: $rip_dest"
-edebug "destination for Encodes is: $encode_dest"
+einfo "makemkv drive is: $makemkv_drive"
+einfo "working directory is: $working_dir"
+einfo "category is: $category"
+einfo "destination for Rips is: $rip_dest"
+einfo "destination for Encodes is: $encode_dest"
 #
 #
 #+--------------------------------+
@@ -416,24 +424,24 @@ banned_name_endings="- @ :"
 #+----------------------------+
 #Check Enough Space Remaining, will only work once variables moved to config script
 space_left=$(df $working_dir | awk '/[0-9]%/{print $(NF-2)}')
-edebug "space left in working directory is: $space_left"
+einfo "space left in working directory is: $space_left"
 if [ "$space_left" -le 65000000 ]; then
   eerror "not enough space to run rip & encode, terminating"
   exit 66
 else
-  edebug "Free space check passed, continuing"
+  einfo "Free space check passed, continuing"
 fi
 #
 #Configure Disc Ripping
 if [[ -z $quality_override ]]; then
   quality="19.0"
 fi
-edebug "quality selected is $quality"
+einfo "quality selected is $quality"
 #
 #Get and use hard coded name of media
 bluray_name=$(blkid -o value -s LABEL "$dev_drive")
 bluray_name=${bluray_name// /_}
-edebug "optical disc bluray name is: $bluray_name"
+einfo "optical disc bluray name is: $bluray_name"
 #
 #
 #Perhpas build up a list of known FOOBAR'd disc labels such as 'LOGICAL_VOLUME, DISC1 etc?'
@@ -443,7 +451,7 @@ bluray_sys_name=$(udfinfo "$dev_drive" 2> /dev/null | grep 'vid' | tail -1 | cut
 #set what to do if result is found
 #perhaps make it more fancy so if bluray_name doesn't contain bluray_sys_name use bluray_sys_name?
 if [[ ! -z $bluray_sys_name ]]; then
-  edebug "bluray_sys_name found, using: $bluray_sys_name"
+  einfo "bluray_sys_name found, using: $bluray_sys_name"
   bluray_name=$bluray_sys_name
 fi
 # create the temp dir, failure to set this will error out handrake parsing info
@@ -455,14 +463,14 @@ mkdir -p "$working_dir/temp/$bluray_name"
 #+-------------------------+
 #set output location for makemkv, not in "encode_only as is used in handrake as $source_loc"
 if [[ ! -z "$working_dir" ]] && [[ ! -z "$rip_dest" ]] && [[ ! -z "$category" ]] && [[ ! -z "$bluray_name" ]]; then
-  edebug "valid Rips (source) directory, creating"
+  einfo "valid Rips (source) directory, creating"
   makemkv_out_loc="$working_dir/$rip_dest/$category/$bluray_name"
   mkdir -p "$makemkv_out_loc"
 else
   eerror "error with necessary variables to create Rips(source files) location"
   exit 65
 fi
-edebug "Rip / Source files will be at: $makemkv_out_loc"
+einfo "Rip / Source files will be at: $makemkv_out_loc"
 #
 #
 #+-------------------------+
@@ -478,8 +486,8 @@ if [[ -z "$encode_only" ]]; then
     tail -n 1 "$working_dir/temp/$bluray_name/$bluray_name.log" | cut -d ',' -f 2
   }
   #
-  edebug "final values passed to makemkvcon are: backup --decrypt --progress=$working_dir/temp/$bluray_name/$bluray_name.log -r $makemkv_drive $makemkv_out_loc"
-  esilent "${colpup}Ripping started...${colrst}"
+  einfo "final values passed to makemkvcon are: backup --decrypt --progress=$working_dir/temp/$bluray_name/$bluray_name.log -r $makemkv_drive $makemkv_out_loc"
+  esilent "Ripping started..."
   unit_of_measure="cycles"
   makemkvcon backup --decrypt --progress="$working_dir/temp/$bluray_name/$bluray_name.log" -r "$makemkv_drive" "$makemkv_out_loc" > /dev/null 2>&1 &
   makemkv_pid=$!
@@ -488,14 +496,15 @@ if [[ -z "$encode_only" ]]; then
   if [[ -z $bar_override ]]; then
     progress_bar2_init
     if [ $? -eq 0 ]; then
-      edebug "...makemkvcon bluray rip completed successfully"
+      einfo "...ripping complete"
     else
       eerror "makemkv produced an error, code: $?"
       exit 66
     fi
   else
-    edebug "progress bars overridden"
+    einfo "progress bars overridden"
     wait $makemkv_pid
+    einfo "...ripping complete"
   fi
 fi
 #
@@ -515,24 +524,39 @@ subtitle_options="-N eng -F scan"
 #
 #make the working directory if not already existing
 #this step is vital, otherwise the files below are created whereever the script is run from and will fail
-cd "$working_dir/temp/$bluray_name" || { edebug "Failure changing to working directory temp"; exit 65; }
+cd "$working_dir/temp/$bluray_name" || { einfo "Failure changing to working directory temp"; exit 65; }
 #
 #Grab all titles from source
-edebug "scanning source location for titles..."
+einfo "scanning source location for titles..."
 HandBrakeCLI --json -i $source_loc -t 0 --main-feature &> all_titles_scan.json
+handbrake_exit_code=$?
+edebug "HB exit code was: $handbrake_exit_code"
+#we ignore 3 because the scan always produces this error it its not a fail for purposes of this script
+if [ $handbrake_exit_code -eq 0 ]; then
+  einfo "...location scan completed."
+elif [ $handbrake_exit_code -eq 1 ]; then
+  eerror "...handbrake scan process was cancelled"
+  dirty_exit
+elif [ $handbrake_exit_code -eq 2 ]; then
+  eerror "...handbrake scan, invalid input. Invalid input name, no size?"
+  dirty_exit
+elif [ $handbrake_exit_code -eq 4 ]; then
+  eerror "...handbrake produced an unknown error"
+  dirty_exit
+fi
 #search file for identified main feature
 auto_found_main_feature=$(grep -w "Found main feature title" all_titles_scan.json)
 if [[ -z $auto_found_main_feature ]]; then
   eerror "Something went wrong with auto_found_main_feature"
   exit 66
 fi
-edebug "auto_found_main_feature is: $auto_found_main_feature"
+einfo "auto_found_main_feature is: $auto_found_main_feature"
 #we cut unwanted "Found main feature title " text from the variable
 auto_found_main_feature=${auto_found_main_feature:25}
-edebug "auto_found_main_feature cut to: $auto_found_main_feature"
+einfo "auto_found_main_feature cut to: $auto_found_main_feature"
 #
 #NOW CREATE main feature_scan
-edebug "creating main_feature_scan.json ..."
+einfo "creating main_feature_scan.json ..."
 #do X if no title over-ride, else use the title over-ride
 if [[ -z $title_override ]]; then
   HandBrakeCLI --json -i $source_loc -t $auto_found_main_feature --scan 1> main_feature_scan.json 2> /dev/null
@@ -548,7 +572,7 @@ if [[ -z $name_override ]]; then
 else
   feature_name="$name_override"
 fi
-edebug "feature name is: $feature_name"
+einfo "feature name is: $feature_name"
 #
 #CLEAN THE FOUND LOCAL TITLE TO SEARCH WITH
 #extract '_' in name
@@ -592,7 +616,7 @@ else
 fi
 #
 if [[ $banned_name_endings =~ (^|[[:space:]])${title_array[-1]}($|[[:space:]]) ]]; then
-  edebug "last of array matche the banned ending element list, removing from array"
+  edebug "last of array matches the banned ending element list, removing from array"
   unset title_array[-1]
   feature_name=( "${title_array[*]}" )
   edebug "online feature name check now set for: $feature_name"
@@ -610,8 +634,8 @@ edebug "$feature_name_prep"
 http_construct="http://www.omdbapi.com/?t=$feature_name_prep&apikey=$omdb_apikey"
 #
 #run online query
-edebug "http_construct is: $http_construct"
-edebug "Querying omdb..."
+einfo "http_construct is: $http_construct"
+einfo "Querying omdb..."
 #omdb_title_result=$(curl -sX GET --header "Accept: */*" "http://www.omdbapi.com/?t=${feature_name}&apikey=${omdb_apikey}")
 omdb_title_result=$(curl -sX GET --header "Accept: */*" "$http_construct")
 #
@@ -620,20 +644,20 @@ omdb_title_result=$(curl -sX GET --header "Accept: */*" "$http_construct")
 if [[ "$omdb_title_result" = *'"Title":"'* ]]; then
   edebug "omdb matching info is: $omdb_title_result"
   omdb_title_name_result=$(echo $omdb_title_result | jq --raw-output '.Title')
-  edebug "omdb title name is: $omdb_title_name_result"
+  einfo "omdb title name is: $omdb_title_name_result"
   omdb_year_result=$(echo $omdb_title_result | jq --raw-output '.Year')
-  edebug "omdb year is: $omdb_year_result"
-  edebug "Getting runtime info..."
+  einfo "omdb year is: $omdb_year_result"
+  einfo "Getting runtime info..."
   #extract runtime from mass omdb result
   omdb_runtime_result=$(echo $omdb_title_result | jq --raw-output '.Runtime')
   #strip out 'min'
   omdb_runtime_result=${omdb_runtime_result%????}
-  edebug "omdb runtime is (mins): $omdb_runtime_result ..."
-  edebug "...converting to hh:mm:ss"
+  einfo "omdb runtime is (mins): $omdb_runtime_result ..."
+  einfo "...converting to hh:mm:ss"
   omdb_runtime_result=$((omdb_runtime_result*60))
   secs=$omdb_runtime_result
   omdb_runtime_result=$(convert_secs_hr_min)
-  edebug "omdb runtime in hh:mm:ss format is: $omdb_runtime_result"
+  einfo "omdb runtime in hh:mm:ss format is: $omdb_runtime_result"
   #
   #START ARRAY WORK TO ANALYSE TRACK TIMES AND ROUND UP SO AS TO COMPART TO OMDB TIMES
   track_times_array=()
@@ -651,6 +675,7 @@ if [[ "$omdb_title_result" = *'"Title":"'* ]]; then
   for ((i=0; i<${#track_times_array[@]}; i++)); do
     #TRACK DETAILS
     track_num=$((i+1))
+    edebug "--------------------------------------------"
     edebug "Running time of track $track_num is: ${track_times_array[$i]}"
     #
     #SECONDS
@@ -663,6 +688,7 @@ if [[ "$omdb_title_result" = *'"Title":"'* ]]; then
       track_secs_new=0
       inc_mins=1
     else
+      track_secs_new=0
       inc_mins=
     fi
     track_secs_new=$(printf "%02d\n" $track_secs_new)
@@ -715,71 +741,77 @@ if [[ "$omdb_title_result" = *'"Title":"'* ]]; then
     else
       edebug "no match"
     fi
-  done
-  edebug "array_matching_track contents are: ${array_matching_track[@]}"
-  edebug "element 1 = ${array_matching_track[0]}"
-  edebug "element 2 = ${array_matching_track[1]}"
-  #
-  if [[ ${#array_matching_track[@]} -gt 0 ]]; then
-    if [[ ${#array_matching_track[@]} -gt 1 ]]; then
-      matching_track_text="Matching runtime tracks detected as:"
-      matching_track_list=${array_matching_track[@]}
-      edebug "$matching_track_text $matching_track_list"
-      for ((i=0, j=1; i<${#array_matching_track[@]}; i++, j++)); do
-        declare "title_$j"="${array_matching_track[$i]}"
-        edebug "title_$j is set as: $title_$j"
-      done
+    done
+    edebug "array_matching_track contents are: ${array_matching_track[@]}"
+    edebug "element 0 = ${array_matching_track[0]}"
+    edebug "element 1 = ${array_matching_track[1]}"
+    if [[ ${#array_matching_track[@]} -gt 0 ]]; then
+      if [[ ${#array_matching_track[@]} -gt 1 ]]; then
+        matching_track_text="Matching runtime tracks detected as:"
+        matching_track_list=${array_matching_track[@]}
+        edebug "$matching_track_text $matching_track_list"
+        for ((i=0, j=1; i<${#array_matching_track[@]}; i++, j++)); do
+        	edebug "j is: $j"
+        	edebug "i is: $i"
+        	edebug "array_matching_track is: ${array_matching_track[$i]}"
+          export "title_$j"="${array_matching_track[$i]}"
+        	edebug "inside loop title_$j is set as: ${array_matching_track[$i]}"
+        done
+      else
+        matching_track_text="Matching runtime track detected as:"
+        matching_track_list=${array_matching_track[@]}
+        edebug "$matching_track_text $dts_track_list"
+        for ((i=0, j=1; i<${#array_matching_track[@]}; i++, j++)); do
+          edebug "j is: $j"
+        	edebug "i is: $i"
+        	edebug "array_matching_track is: ${array_matching_track[$i]}"
+          export "title_$j"="${array_matching_track[$i]}"
+        	edebug "inside loop title_$j is set as: ${array_matching_track[$i]}"
+        done
+      fi
     else
-      matching_track_text="Matching runtime track detected as:"
-      matching_track_list=${array_matching_track[@]}
-      edebug "$matching_track_text $dts_track_list"
-      for ((i=0, j=1; i<${#array_matching_track[@]}; i++, j++)); do
-        declare "title_$j"="${array_matching_track[$i]}"
-        edebug "title_$j is set as: $title_$j"
-      done
+      einfo "No title track matching runtime found"
+      matching_track_list=
     fi
-  else
-    edebug "No title track matching runtime found"
-    matching_track_list=
-  fi
+    #
   #
 elif [[ "$omdb_title_result" = *'"Error":"No API key provided."'* ]]; then
-  edebug "online search failed not doing extra stuff"
+  einfo "online search failed not doing extra stuff"
   omdb_title_result=
 elif [[ "$omdb_title_result" = *'"Error":"Incorrect IMDb ID."'* ]]; then
-  edebug "omdb search ran but no matching result could be found"
+  einfo "omdb search ran but no matching result could be found"
   omdb_title_result=
 elif [[ "$omdb_title_result" = *'"Error":"Movie not found!"'* ]]; then
-  edebug "omdb search ran but no matching result could be found"
+  einfo "omdb search ran but no matching result could be found"
   omdb_title_result=
 elif [[ "$omdb_title_result" = *'</html>nter>cloudflare</center>></center>d>'* ]]; then
-  edebug "omdb search ran but no matching result could be found"
+  einfo "omdb search ran but no matching result could be found"
   omdb_title_result=
 else
-  edebug "Some other error occured, dumping omdb_title_result"
-  edebug "omdb_title_result is: $omdb_title_result"
+  einfo "Some other error occured, dumping omdb_title_result"
+  einfo "omdb_title_result is: $omdb_title_result"
   omdb_title_result=
 fi
 #
 #TEST RESULTS TO SEE WHICH TO CHOOSE AND IF DIFFERENT TO OUT AUTO FIND TITLE WE NEED TO RECREATE main_feature_scan.json BEFORE AUDIO CHECK
 if [[ -z "$title_1" ]] && [[ -z "$title_2" ]]; then
-  edebug "no online data to use, so using local data"
+  einfo "no online data to use, so using local data"
 elif [[ ! -z "$title_1" ]] && [[ ! -z "$title_2" ]]; then
-  enotify "online check resulted in both titles (title_1: $title_1 & title_2: $title_2) matching handbrakes automatically found main feature: $auto_found_main_feature. Using title_2"
+  enotify "online check resulted in both titles (title_1: $title_1 & title_2: $title_2) matching the runtime of handbrakes automatically found main feature: $auto_found_main_feature. Using title_2"
   #we choose title 2 when there are 2 detected as this better than 50% right most of the time imo.
   mv main_feature_scan.json main_feature_scan.json.original
   auto_found_main_feature=$(echo $title_2)
   HandBrakeCLI --json -i $source_loc -t $auto_found_main_feature --scan 1> main_feature_scan.json 2> /dev/null
   clean_main_feature_scan
 elif [[ -z "$title_1" ]] && [[ ! -z "$title_2" ]]; then #title 1 doesnt match but title 2 does, use it.
-  edebug "online check resulted in title_2, matching handbrakes automatically found main feature $auto_found_main_feature, using title_2"
+  einfo "online check resulted in title_2, matching handbrakes automatically found main feature $auto_found_main_feature, using title_2"
   mv main_feature_scan.json main_feature_scan.json.original
   auto_found_main_feature=$(echo $title_2)
   HandBrakeCLI --json -i $source_loc -t $auto_found_main_feature --scan 1> main_feature_scan.json 2> /dev/null
   clean_main_feature_scan
 elif [[ ! -z "$title_1" ]] && [[ -z "$title_2" ]]; then
   #then title 1 is set but if $title_2 is valid $title_2 is set
-  edebug "online check resulted in only title_1: $title_1 matching handbrakes automatically found main feature, so using"
+  einfo "online check resulted in only title_1: $title_1 matching handbrakes automatically found main feature, so using"
 fi
 #
 #EXTRACT AUDIO TRACKS FROM $main_feature_scan_trimmed into parsed_audio_tracks
@@ -849,14 +881,14 @@ if [[ ${#bdlpcm_array[@]} -gt 0 ]]; then
     bdlpcm_text="tracks:"
     bdlpcm_track_list=${bdlpcm_array[@]}
     bdlpcm_track_list=${bdlpcm_track_list// /,}
-    edebug "BD LPCM detected on $bdlpcm_text $bdlpcm_track_list"
+    einfo "BD LPCM detected on $bdlpcm_text $bdlpcm_track_list"
   else
     bdlpcm_text="BD LPCM detected on track:"
     bdlpcm_track_list=${bdlpcm_array[@]}
-    edebug "BD LPCM detected on $bdlpcm_text $bdlpcm_track_list"
+    einfo "BD LPCM detected on $bdlpcm_text $bdlpcm_track_list"
   fi
 else
-  edebug "NO BD LPCM tracks detected"
+  einfo "NO BD LPCM tracks detected"
   bdlpcm_track_list=
 fi
 #
@@ -866,14 +898,14 @@ if [[ ${#truehd_array[@]} -gt 0 ]]; then
     truehd_text="tracks:"
     truehd_track_list=${truehd_array[@]}
     truehd_track_list=${truehd_track_list// /,}
-    edebug "TrueHD detected on $truehd_text $truehd_track_list"
+    einfo "TrueHD detected on $truehd_text $truehd_track_list"
   else
     truehd_text="track:"
     truehd_track_list=${truehd_array[@]}
-    edebug "TrueHD detected on $truehd_text $truehd_track_list"
+    einfo "TrueHD detected on $truehd_text $truehd_track_list"
   fi
 else
-  edebug "NO TrueHD tracks detected"
+  einfo "NO TrueHD tracks detected"
   dts_track_list=
 fi
 #
@@ -883,14 +915,14 @@ if [[ ${#dtshd_array[@]} -gt 0 ]]; then
     dtshd_text="tracks:"
     dtshd_track_list=${dtshd_array[@]}
     dtshd_track_list=${dtshd_track_list// /,}
-    edebug "DTS-HD detected on $dtshd_text $dtshd_track_list"
+    einfo "DTS-HD detected on $dtshd_text $dtshd_track_list"
   else
     dtshd_text="track:"
     dtshd_track_list=${dtshd_array[@]}
-    edebug "DTS-HD detected on $dtshd_text $dtshd_track_list"
+    einfo "DTS-HD detected on $dtshd_text $dtshd_track_list"
   fi
 else
-  edebug "NO DTS-HD tracks detected"
+  einfo "NO DTS-HD tracks detected"
   dtshd_track_list=
 fi
 #
@@ -900,14 +932,14 @@ if [[ ${#dts_array[@]} -gt 0 ]]; then
     dts_text="tracks:"
     dts_track_list=${dts_array[@]}
     dts_track_list=${dts_track_list// /,}
-    edebug "DTS detected on $dts_text $dts_track_list"
+    einfo "DTS detected on $dts_text $dts_track_list"
   else
     dts_text="track:"
     dts_track_list=${dts_array[@]}
-    edebug "DTS detected on $dts_text $dts_track_list"
+    einfo "DTS detected on $dts_text $dts_track_list"
   fi
 else
-  edebug "NO DTS tracks detected"
+  einfo "NO DTS tracks detected"
   dts_track_list=
 fi
 #
@@ -917,14 +949,14 @@ if [[ ${#ac3_51_array[@]} -gt 0 ]]; then
     ac3_51_text="tracks:"
     ac3_51_track_list=${ac3_51_array[@]}
     ac3_51_track_list=${ac3_51_track_list// /,}
-    edebug "AC3 5.1 detected on $ac3_51_text $ac3_51_track_list"
+    einfo "AC3 5.1 detected on $ac3_51_text $ac3_51_track_list"
   else
     ac3_51_text="track:"
     ac3_51_track_list=${ac3_51_array[@]}
-    edebug "AC3 5.1 detected on $ac3_51_text $ac3_51_track_list"
+    einfo "AC3 5.1 detected on $ac3_51_text $ac3_51_track_list"
   fi
 else
-  edebug "NO AC3 5.1 tracks detected"
+  einfo "NO AC3 5.1 tracks detected"
   ac3_51_track_list=
 fi
 #
@@ -934,14 +966,14 @@ if [[ ${#ac3_array[@]} -gt 0 ]]; then
     ac3_text="tracks:"
     ac3_track_list=${ac3_array[@]}
     ac3_track_list=${ac3_track_list// /,}
-    edebug "AC3 detected on $ac3_text $ac3_track_list"
+    einfo "AC3 detected on $ac3_text $ac3_track_list"
   else
     ac3_text="track:"
     ac3_track_list=${ac3_array[@]}
-    edebug "AC3 detected on $ac3_text $ac3_track_list"
+    einfo "AC3 detected on $ac3_text $ac3_track_list"
   fi
 else
-  edebug "NO AC3 tracks detected, error??"
+  ewarn "NO AC3 tracks detected, error??"
   ac3_track_list=
 fi
 #
@@ -952,31 +984,31 @@ fi
 # if its present always prefer, TrueHD; if not, DTS-HD, if not, BD LPCM; if not, DTS; if not, AC3 5.1, and if none of these AC3 2.0 track"
 if [[ ! -z "$truehd_track_list" ]]; then #true = TrueHD
   selected_audio_track=$truehd_track_list
-  edebug "Selecting True_HD audio on $truehd_text $truehd_track_list"
+  einfo "Selecting True_HD audio on $truehd_text $truehd_track_list"
   audio_codec="TrueHD"
 elif [[ ! -z "$truehd_track_list" ]] && [[ ! -z "$dtshd_track_list" ]]; then #true false = TrueHD
   selected_audio_track=$truehd_track_list
-  edebug "Selecting True_HD audio on $truehd_text $truehd_track_list"
+  einfo "Selecting True_HD audio on $truehd_text $truehd_track_list"
   audio_codec="TrueHD"
 elif [[ -z "$truehd_track_list" ]] && [[ ! -z "$dtshd_track_list" ]]; then #false true = DTS-HD
   selected_audio_track=$dtshd_track_list
-  edebug "Selecting DTS-HD audio on $dtshd_text $dtshd_track_list"
+  einfo "Selecting DTS-HD audio on $dtshd_text $dtshd_track_list"
   audio_codec="DTS-HD"
 elif [[ ! -z "$bdlpcm_track_list" ]] && [[ -z "$truehd_track_list" ]] && [[ -z "$dtshd_track_list" ]]; then #true false false = BD LPCM
   selected_audio_track=$bdlpcm_track_list
-  edebug "Selecting BD LPCM audio on $bdlpcm_text $bdlpcm_track_list"
+  einfo "Selecting BD LPCM audio on $bdlpcm_text $bdlpcm_track_list"
   audio_codec="FLAC"
 elif [[ -z "$truehd_track_list" ]] && [[ -z "$dtshd_track_list" ]] && [[ -z "$bdlpcm_track_list" ]] && [[ ! -z "$dts_track_list" ]]; then #false false false true = DTS
   selected_audio_track=$dts_track_list
-  edebug "Selecting DTS audio on $dts_text $dts_track_list"
+  einfo "Selecting DTS audio on $dts_text $dts_track_list"
   audio_codec="DTS"
 elif [[ -z "$truehd_track_list" ]] && [[ -z "$dtshd_track_list" ]] && [[ -z "$bdlpcm_track_list" ]] && [[ -z "$dts_track_list" ]] && [[ ! -z "$ac3_51_track_list" ]]; then #false, false, flase, false = AC3 5.1
   selected_audio_track=$ac3_51_track_list
-  edebug "Selecting AC3 5.1 audio on $ac3_51_text $ac3_51_track_list"
+  einfo "Selecting AC3 5.1 audio on $ac3_51_text $ac3_51_track_list"
   audio_codec="AC-3"
 elif [[ -z "$truehd_track_list" ]] && [[ -z "$dtshd_track_list" ]] && [[ -z "$bdlpcm_track_list" ]] && [[ -z "$dts_track_list" ]] && [[ -z "$ac3_51_track_list" ]]; then #false false false false false false = AC3 (default)
   selected_audio_track=${ac3_array[0]}
-  edebug "no matches for preferred audio types, defaulting to first AC3 track: ${ac3_array[0]}"
+  einfo "no matches for preferred audio types, defaulting to first AC3 track: ${ac3_array[0]}"
   audio_codec="AC-3"
 fi
 #
@@ -986,7 +1018,7 @@ if [[ ! -z $bdlpcm_track_list ]]; then
 else
   audio_options="-a $selected_audio_track -E copy --audio-copy-mask dtshd,truehd,dts,flac"
 fi
-edebug "audio options passed to HandBrakeCLI are: $audio_options"
+einfo "audio options passed to HandBrakeCLI are: $audio_options"
 #
 #
 #+----------------------------+
@@ -997,18 +1029,18 @@ source_options="-t $auto_found_main_feature"
 #...but override it if override is set
 if [[ ! -z "$title_override" ]]; then
   source_options=-"t $title_override"
-  edebug "title override selected, using: $title_override"
+  einfo "title override selected, using: $title_override"
 fi
 #display what the result is
-edebug "source options are: $source_options"
+einfo "source options are: $source_options"
 #
 #lets use our fancy name IF found online, else revert to basic
 if [[ ! -z "$working_dir" ]] && [[ ! -z "$encode_dest" ]] && [[ ! -z "$category" ]] && [[ ! -z "$omdb_title_name_result" ]] && [[ ! -z "$omdb_year_result" ]] && [[ ! -z "$container_type" ]]; then
-  edebug "using online found movie title & year for naming"
+  einfo "using online found movie title & year for naming"
   output_loc="$working_dir/$encode_dest/$category/$omdb_title_name_result ($omdb_year_result)/"
   feature_name="${omdb_title_name_result} (${omdb_year_result}) - Bluray-1080p_Proper - $audio_codec.${container_type}"
 elif [[ ! -z "$working_dir" ]] && [[ ! -z "$encode_dest" ]] && [[ ! -z "$category" ]] && [[ -z "$omdb_title_result" ]] && [[ ! -z "$feature_name" ]] && [[ ! -z "$container_type" ]]; then
-  edebug "using local data based naming"
+  einfo "using local data based naming"
   output_loc="$working_dir/$encode_dest/$category/$feature_name/"
   feature_name="${feature_name} - Bluray-1080p_Proper - $audio_codec.${container_type}"
 else
@@ -1018,13 +1050,13 @@ fi
 #echo "$working_dir" "$encode_dest" "$category" "$omdb_title_result" "$omdb_year_result" "$container_type"
 #echo "$working_dir" "$encode_dest" "$category" "$omdb_title_result" "$feature_name" "$container_type"
 # create the
-edebug "output_loc is: $output_loc"
-edebug "...creating output_loc if not in existance"
+einfo "output_loc is: $output_loc"
+einfo "...creating output_loc if not in existance"
 mkdir -p "$output_loc"
-edebug "feature name is: $feature_name"
-edebug "final file name construct will be: ${output_loc}${feature_name}"
+einfo "feature name is: $feature_name"
+einfo "final file name construct will be: ${output_loc}${feature_name}"
 #display the final full options passed to handbrake
-edebug "Final HandBrakeCLI Options are: $options -i $source_loc $source_options -o ${output_loc}${feature_name} $output_options $video_options $audio_options $picture_options $filter_options $subtitle_options > $working_dir/temp/$bluray_name/handbrake.log"
+einfo "Final HandBrakeCLI Options are: $options -i $source_loc $source_options -o ${output_loc}${feature_name} $output_options $video_options $audio_options $picture_options $filter_options $subtitle_options > $working_dir/temp/$bluray_name/handbrake.log"
 #
 #
 #+--------------------------+
@@ -1044,26 +1076,27 @@ if [[ -z $rip_only ]]; then
     tot_progress_result=$((10#$tot_progress_result))
     echo $tot_progress_result
   }
-  esilent "${colbor}Encoding started...${colrst}"
+  sleep 1
+  esilent "Encoding started..."
   #HandBrakeCLI $options -i $source_loc $source_options -o $output_loc $output_options $video_options $audio_options $picture_options $filter_options $subtitle_options > /dev/null 2>&1 &
   unit_of_measure="percent"
   HandBrakeCLI $options -i $source_loc $source_options -o "${output_loc}${feature_name}" $output_options $video_options $audio_options $picture_options $filter_options $subtitle_options > "$working_dir"/temp/"$bluray_name"/handbrake.log 2>&1 &
   handbrake_pid=$!
-  edebug "handbrake_pid: $handbrake_pid"
+  einfo "handbrake_pid: $handbrake_pid"
   pid_name=$handbrake_pid
-  edebug "pid name: $pid_name"
-  sleep 10s # to give time file to be created and data being inputted
+  einfo "pid name: $pid_name"
+  sleep 10s # to give time file to be created and data populating
   if [[ -z $bar_override ]]; then
     progress_bar2_init
     #check for any non zero errors
     if [ $? -eq 0 ]; then
-      edebug "...handbrake conversion of: $bluray_name complete."
+      einfo "...handbrake conversion of: $bluray_name complete."
     else
       eerror "...handbrake produced an error, code: $?"
       exit 66
     fi
   else
-    edebug "progress bars overriden"
+    einfo "progress bars overriden"
     wait $handbrake_pid
   fi
 fi
