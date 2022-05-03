@@ -1,6 +1,7 @@
-# control_scripts
+#**control_scripts**
 
-Background
+##**Background**
+
 This is a collection of scripts used on a day to day basis to automate various functions on my media pc, specifically the ripping and encoding of my blu-ray and music collections.
 
 The overall aim is to create a bunch of scripts that will provide the functionality that I (or my family) insert media into by optical drive, the content is ripped, encoded and availiable for use the way I want it.
@@ -13,9 +14,9 @@ If you do use any of these scripts and come up with a problem, idea, improvement
 
 -------------------------------------------------------------------------------------------------
 
-TL;DR
+##**TL;DR**
 
-Setting Up
+###**Setting Up**
 Clone the repository onto your machine, along with the helper_script repository, eg:
 
 ```bash
@@ -26,7 +27,7 @@ cd control_scripts
 git checkout develop
 ```
 
-Installation
+###**Installation**
 
 install options are available via the ```-h flag```
 
@@ -35,7 +36,7 @@ cd ~/bin
 ./control_scripts_install.sh -h
 ```
 
-```bash
+```
 Usage: /home/jlivin25/bin/control_scripts/control_scripts_install.sh control_scripts_install.sh
 Usage: /home/jlivin25/bin/control_scripts/control_scripts_install.sh -V selects dry-run with verbose level logging
 	-d Use this flag to specify dry run, no files will be converted, useful in conjunction with -V or -G
@@ -58,7 +59,7 @@ cd ~/bin
 ./control_scripts_install.sh
 ```
 
-BD_ripping.sh
+##**BD_ripping.sh**
 
 This script has been written to automate the use of the fabulous tools makemkv and HandBrake, it uses makemkv to rip the disc content and HandBrake to encode it, presently this only works for blu-ray films
 
@@ -70,7 +71,7 @@ Usage options are availiable via '-h' flag
 ./BD_ripping.sh -h
 ```
 
-```bash
+```
 Usage: /home/USER/bin/control_scripts/ripping_scripts/BD_ripping.sh BD_ripping.sh -G -e -t ## -n TITLE HERE -q ## -s -c
 	 Running the script with no flags causes default behaviour with logging level set via 'verbosity' variable
 	-S Override set verbosity to specify silent log level
