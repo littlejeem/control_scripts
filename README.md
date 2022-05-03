@@ -1,6 +1,6 @@
-#**control_scripts**
+#control_scripts
 
-##**Background**
+##Background
 
 This is a collection of scripts used on a day to day basis to automate various functions on my media pc, specifically the ripping and encoding of my blu-ray and music collections.
 
@@ -14,7 +14,7 @@ If you do use any of these scripts and come up with a problem, idea, improvement
 
 -------------------------------------------------------------------------------------------------
 
-##**TL;DR**
+##TL;DR
 
 ###**Setting Up**
 Clone the repository onto your machine, along with the helper_script repository, eg:
