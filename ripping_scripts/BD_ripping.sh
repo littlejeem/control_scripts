@@ -272,13 +272,27 @@ dirty_exit () {
     sleep 2
     [ -d "$output_loc" ] && rm -r "$output_loc" || einfo "no output folder to delete"
   fi
-  script_exit
+  if [ -d /tmp/"$lockname" ]; then
+    rm -r /tmp/"$lockname"
+    if [[ $? -ne 0 ]]; then
+        eerror "error removing lockdirectory"
+        exit 65
+    else
+        enotify "successfully removed lockdirectory"
+    fi
+  fi
+  eerror "$lockname experienced an error"
+  if [ $handbrake_exit_code -gt 0 ]; then
+    error "error found with handbrake"
+  fi
+  exit 66
 }
 #
 #
 #+------------------------+
 #+---"Get User Options"---+
 #+------------------------+
+esilent "$lockname started"
 while getopts ":SVGHhrespct:n:q:" opt
 do
     case "${opt}" in
@@ -377,7 +391,7 @@ prog_check
 #+----------------------+
 #+---"Script Started"---+
 #+----------------------+
-# At this point the script is set up and all necessary conditions.
+# At this point the script is set up and all necessary conditions recorded or imported.
 esilent "$lockname started"
 #
 #
@@ -1016,7 +1030,7 @@ fi
 if [[ $audio_codec == "FLAC" ]]; then
   audio_options="-a $selected_audio_track -E flac24 --mixdown 5point1"
 else
-  audio_options="-a $selected_audio_track -E copy --audio-copy-mask dtshd,truehd,dts,flac"
+  audio_options="-a $selected_audio_track -E copy --audio-copy-mask dtshd,truehd,dts"
 fi
 einfo "audio options passed to HandBrakeCLI are: $audio_options"
 #
@@ -1098,6 +1112,7 @@ if [[ -z $rip_only ]]; then
   else
     einfo "progress bars overriden"
     wait $handbrake_pid
+    einfo "...handbrake conversion of: $bluray_name complete."
   fi
 fi
 #
