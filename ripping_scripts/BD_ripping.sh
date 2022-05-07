@@ -388,13 +388,6 @@ program_check="udfinfo"
 prog_check
 #
 #
-#+----------------------+
-#+---"Script Started"---+
-#+----------------------+
-# At this point the script is set up and all necessary conditions recorded or imported.
-esilent "$lockname started"
-#
-#
 #+--------------------------------------+
 #+---"Display some info about script"---+
 #+--------------------------------------+
@@ -689,7 +682,7 @@ if [[ "$omdb_title_result" = *'"Title":"'* ]]; then
   for ((i=0; i<${#track_times_array[@]}; i++)); do
     #TRACK DETAILS
     track_num=$((i+1))
-    edebug "--------------------------------------------"
+    edebug "---------------------------------------"
     edebug "Running time of track $track_num is: ${track_times_array[$i]}"
     #
     #SECONDS
@@ -750,13 +743,14 @@ if [[ "$omdb_title_result" = *'"Title":"'* ]]; then
     edebug "new track time is: $local_track_time"
     edebug "omdb_runtime is: $omdb_runtime_result"
     if [[ "$local_track_time" = "$omdb_runtime_result" ]]; then
-      edebug "track matched, using"
+      edebug "*** track matched, using ***"
       array_matching_track+=( $track_num )
     else
       edebug "no match"
     fi
     done
-    edebug "array_matching_track contents are: ${array_matching_track[@]}"
+    edebug "--------------------------------------------"
+    edebug "array_matching_track contents are: ${array_matching_track[*]}"
     edebug "element 0 = ${array_matching_track[0]}"
     edebug "element 1 = ${array_matching_track[1]}"
     if [[ ${#array_matching_track[@]} -gt 0 ]]; then
@@ -847,7 +841,7 @@ ac3_array=()
 #read file into the array
 mapfile -t parsed_audio_array <parsed_audio_tracks
 #show ray array contents once read in from file
-edebug "array contents are: ${parsed_audio_array[@]}"
+edebug "parsed_audio_array contents are: ${parsed_audio_array[*]}"
 #for each array entry search for specific set text, if found add that entry to relevant array defined above
 for ((i=0; i<${#parsed_audio_array[@]}; i++)); do
   #"(BD LPCM)"
