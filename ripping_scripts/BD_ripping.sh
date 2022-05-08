@@ -743,13 +743,15 @@ if [[ "$omdb_title_result" = *'"Title":"'* ]]; then
     edebug "new track time is: $local_track_time"
     edebug "omdb_runtime is: $omdb_runtime_result"
     if [[ "$local_track_time" = "$omdb_runtime_result" ]]; then
-      edebug "*** track matched, using ***"
-      array_matching_track+=( $track_num )
+      edebug ""
+      edebug "*** TRACK MATCHED, using ***"
+      edevug ""
+      array_matching_track+=( "$track_num" )
     else
       edebug "no match"
     fi
     done
-    edebug "--------------------------------------------"
+    edebug "---------------------------------------"
     edebug "array_matching_track contents are: ${array_matching_track[*]}"
     edebug "element 0 = ${array_matching_track[0]}"
     edebug "element 1 = ${array_matching_track[1]}"
@@ -854,30 +856,30 @@ for ((i=0; i<${#parsed_audio_array[@]}; i++)); do
   if [[ ${parsed_audio_array[$i]} =~ (^|[[:space:]])"(TrueHD)"($|[[:space:]]) ]]; then
     truehd_track[i]=$((i+1))
     edebug "TrueHD detected at element $i, audio track: ${truehd_track[i]}"
-    truehd_array+=( ${truehd_track[i]} )
+    truehd_array+=( "${truehd_track[i]}" )
   fi
   #"(DTS-HD MA)"
   if [[ ${parsed_audio_array[$i]} =~ (^|[[:space:]])"(DTS-HD"[[:space:]]"MA)"($|[[:space:]]) ]]; then
     dtshd_track[i]=$((i+1))
     edebug "DTS-HD detected at element $i, audio track: ${dtshd_track[i]}"
-    dtshd_array+=( ${dtshd_track[i]} )
+    dtshd_array+=( "${dtshd_track[i]}" )
   fi
   #"(DTS)"
   if [[ ${parsed_audio_array[$i]} =~ (^|[[:space:]])"(DTS)"($|[[:space:]]) ]]; then
     dts_track[i]=$((i+1))
     edebug "DTS detected at element $i, audio track: ${dts_track[i]}"
-    dts_array+=( ${dts_track[i]} )
+    dts_array+=( "${dts_track[i]}" )
   fi
   #"(AC3) (5.1"
   if [[ ${parsed_audio_array[$i]} =~ (^|[[:space:]])"(AC3)"[[:space:]]"(5.1"($|[[:space:]]) ]]; then
     ac3_51_track[i]=$((i+1))
     edebug "AC3 5.1 detected at element $i, audio track: ${ac3_51_track[i]}"
-    ac3_51_array+=( ${ac3_51_track[i]} )
+    ac3_51_array+=( "${ac3_51_track[i]}" )
   fi
   if [[ ${parsed_audio_array[$i]} =~ (^|[[:space:]])"(AC3)"[[:space:]]"(2.0"($|[[:space:]]) ]]; then
     ac3_track[i]=$((i+1))
     edebug "AC3 2.0 detected at element $i, audio track: ${ac3_track[i]}"
-    ac3_array+=( ${ac3_track[i]} )
+    ac3_array+=( "${ac3_track[i]}" )
   fi
 done
 #
