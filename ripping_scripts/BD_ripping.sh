@@ -633,10 +633,10 @@ fi
 #
 feature_name=$(echo "${title_array[*]}")
 feature_name_prep="${feature_name//_/ }"
-edebug "$feature_name_prep"
+edebug "Sanitized feature_name_prep is: $feature_name_prep"
 # do some work to make the array result acceptable for a http api request, replace ' ' with '+'
 feature_name_prep="${feature_name_prep// /+}"
-edebug "$feature_name_prep"
+edebug "API ready feature_name_prep is: $feature_name_prep"
 #create http segment in a variable so that individual variables don't need expanding in curl request, it doesn't work!
 http_construct="http://www.omdbapi.com/?t=$feature_name_prep&apikey=$omdb_apikey"
 #
@@ -745,7 +745,7 @@ if [[ "$omdb_title_result" = *'"Title":"'* ]]; then
     if [[ "$local_track_time" = "$omdb_runtime_result" ]]; then
       edebug ""
       edebug "*** TRACK MATCHED, using ***"
-      edevug ""
+      edebug ""
       array_matching_track+=( "$track_num" )
     else
       edebug "no match"
@@ -889,12 +889,12 @@ done
 if [[ ${#bdlpcm_array[@]} -gt 0 ]]; then
   if [[ ${#bdlpcm_array[@]} -gt 1 ]]; then
     bdlpcm_text="tracks:"
-    bdlpcm_track_list=${bdlpcm_array[@]}
+    bdlpcm_track_list=${bdlpcm_array[*]}
     bdlpcm_track_list=${bdlpcm_track_list// /,}
     einfo "BD LPCM detected on $bdlpcm_text $bdlpcm_track_list"
   else
     bdlpcm_text="BD LPCM detected on track:"
-    bdlpcm_track_list=${bdlpcm_array[@]}
+    bdlpcm_track_list=${bdlpcm_array[*]}
     einfo "BD LPCM detected on $bdlpcm_text $bdlpcm_track_list"
   fi
 else
@@ -906,12 +906,12 @@ fi
 if [[ ${#truehd_array[@]} -gt 0 ]]; then
   if [[ ${#truehd_array[@]} -gt 1 ]]; then
     truehd_text="tracks:"
-    truehd_track_list=${truehd_array[@]}
+    truehd_track_list=${truehd_array[*]}
     truehd_track_list=${truehd_track_list// /,}
     einfo "TrueHD detected on $truehd_text $truehd_track_list"
   else
     truehd_text="track:"
-    truehd_track_list=${truehd_array[@]}
+    truehd_track_list=${truehd_array[*]}
     einfo "TrueHD detected on $truehd_text $truehd_track_list"
   fi
 else
@@ -923,12 +923,12 @@ fi
 if [[ ${#dtshd_array[@]} -gt 0 ]]; then
   if [[ ${#dtshd_array[@]} -gt 1 ]]; then
     dtshd_text="tracks:"
-    dtshd_track_list=${dtshd_array[@]}
+    dtshd_track_list=${dtshd_array[*]}
     dtshd_track_list=${dtshd_track_list// /,}
     einfo "DTS-HD detected on $dtshd_text $dtshd_track_list"
   else
     dtshd_text="track:"
-    dtshd_track_list=${dtshd_array[@]}
+    dtshd_track_list=${dtshd_array[*]}
     einfo "DTS-HD detected on $dtshd_text $dtshd_track_list"
   fi
 else
@@ -940,12 +940,12 @@ fi
 if [[ ${#dts_array[@]} -gt 0 ]]; then
   if [[ ${#dts_array[@]} -gt 1 ]]; then
     dts_text="tracks:"
-    dts_track_list=${dts_array[@]}
+    dts_track_list=${dts_array[*]}
     dts_track_list=${dts_track_list// /,}
     einfo "DTS detected on $dts_text $dts_track_list"
   else
     dts_text="track:"
-    dts_track_list=${dts_array[@]}
+    dts_track_list=${dts_array[*]}
     einfo "DTS detected on $dts_text $dts_track_list"
   fi
 else
@@ -957,12 +957,12 @@ fi
 if [[ ${#ac3_51_array[@]} -gt 0 ]]; then
   if [[ ${#ac3_51_array[@]} -gt 1 ]]; then
     ac3_51_text="tracks:"
-    ac3_51_track_list=${ac3_51_array[@]}
+    ac3_51_track_list=${ac3_51_array[*]}
     ac3_51_track_list=${ac3_51_track_list// /,}
     einfo "AC3 5.1 detected on $ac3_51_text $ac3_51_track_list"
   else
     ac3_51_text="track:"
-    ac3_51_track_list=${ac3_51_array[@]}
+    ac3_51_track_list=${ac3_51_array[*]}
     einfo "AC3 5.1 detected on $ac3_51_text $ac3_51_track_list"
   fi
 else
@@ -974,12 +974,12 @@ fi
 if [[ ${#ac3_array[@]} -gt 0 ]]; then
   if [[ ${#ac3_array[@]} -gt 1 ]]; then
     ac3_text="tracks:"
-    ac3_track_list=${ac3_array[@]}
+    ac3_track_list=${ac3_array[*]}
     ac3_track_list=${ac3_track_list// /,}
     einfo "AC3 detected on $ac3_text $ac3_track_list"
   else
     ac3_text="track:"
-    ac3_track_list=${ac3_array[@]}
+    ac3_track_list=${ac3_array[*]}
     einfo "AC3 detected on $ac3_text $ac3_track_list"
   fi
 else
