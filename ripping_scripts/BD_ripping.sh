@@ -221,13 +221,13 @@ clean_ctrlc () {
     #
     if [[ ! -z "$makemkv_pid" ]]; then
       einfo "Terminating rip"
-      kill $makemkv_pid
+      kill "$makemkv_pid"
       sleep 2
     fi
     #
     if [[ ! -z "$handbrake_pid" ]]; then
       einfo "Terminating encode"
-      kill $handbrake_pid
+      kill "$handbrake_pid"
       sleep 2
       [ -d "$output_loc" ] && rm -r "$output_loc" || einfo "no output folder to delete"
     fi
@@ -241,13 +241,13 @@ clean_ctrlc () {
 clean_exit () {
  if [[ ! -z "$makemkv_pid" ]]; then
    einfo "Terminating rip"
-   kill $makemkv_pid
+   kill "$makemkv_pid"
    sleep 2
  fi
  #
  if [[ ! -z "$handbrake_pid" ]]; then
    einfo "Terminating encode"
-   kill $handbrake_pid
+   kill "$handbrake_pid"
    sleep 2
    [ -d "$output_loc" ] && rm -r "$output_loc" || einfo "no output folder to delete"
  fi
@@ -262,13 +262,13 @@ dirty_exit () {
   temp_clean_override=1
   if [[ ! -z "$makemkv_pid" ]]; then
     einfo "Terminating rip"
-    kill $makemkv_pid
+    kill "$makemkv_pid"
     sleep 2
   fi
   #
   if [[ ! -z "$handbrake_pid" ]]; then
     einfo "Terminating encode"
-    kill $handbrake_pid
+    kill "$handbrake_pid"
     sleep 2
     [ -d "$output_loc" ] && rm -r "$output_loc" || einfo "no output folder to delete"
   fi
@@ -282,7 +282,7 @@ dirty_exit () {
     fi
   fi
   eerror "$lockname experienced an error"
-  if [ $handbrake_exit_code -gt 0 ]; then
+  if [ "$handbrake_exit_code" -gt 0 ]; then
     error "error found with handbrake"
   fi
   exit 66
@@ -535,7 +535,7 @@ cd "$working_dir/temp/$bluray_name" || { einfo "Failure changing to working dire
 #
 #Grab all titles from source
 einfo "scanning source location for titles..."
-HandBrakeCLI --json -i $source_loc -t 0 --main-feature &> all_titles_scan.json
+HandBrakeCLI --json -i "$source_loc" -t 0 --main-feature &> all_titles_scan.json
 handbrake_exit_code=$?
 edebug "HB exit code was: $handbrake_exit_code"
 #we ignore 3 because the scan always produces this error it its not a fail for purposes of this script
@@ -596,7 +596,7 @@ edebug "field_count +1 is: $field_count"
 title_array=() # declare an empty array; same as: declare -a groups
 #for i in {1..5..1}; do
 for ((i=1;i<=field_count;i++)); do
-  title_array[i]=$(echo $feature_name | cut -d '_' -f $i)
+  title_array[i]=$(echo "$feature_name" | cut -d '_' -f $i)
   edebug "element is: $i, value is: ${title_array[i]}"
   if [[ $banned_list =~ (^|[[:space:]])${title_array[i]}($|[[:space:]]) ]]; then
     edebug "element matches banned list removing from array"
@@ -650,13 +650,13 @@ omdb_title_result=$(curl -sX GET --header "Accept: */*" "$http_construct")
 #{"Response":"False","Error":"Incorrect IMDb ID."}
 if [[ "$omdb_title_result" = *'"Title":"'* ]]; then
   edebug "omdb matching info is: $omdb_title_result"
-  omdb_title_name_result=$(echo $omdb_title_result | jq --raw-output '.Title')
+  omdb_title_name_result=$(echo "$omdb_title_result" | jq --raw-output '.Title')
   einfo "omdb title name is: $omdb_title_name_result"
-  omdb_year_result=$(echo $omdb_title_result | jq --raw-output '.Year')
+  omdb_year_result=$(echo "$omdb_title_result" | jq --raw-output '.Year')
   einfo "omdb year is: $omdb_year_result"
   einfo "Getting runtime info..."
   #extract runtime from mass omdb result
-  omdb_runtime_result=$(echo $omdb_title_result | jq --raw-output '.Runtime')
+  omdb_runtime_result=$(echo "$omdb_title_result" | jq --raw-output '.Runtime')
   #strip out 'min'
   omdb_runtime_result=${omdb_runtime_result%????}
   einfo "omdb runtime is (mins): $omdb_runtime_result ..."
@@ -686,7 +686,7 @@ if [[ "$omdb_title_result" = *'"Title":"'* ]]; then
     edebug "Running time of track $track_num is: ${track_times_array[$i]}"
     #
     #SECONDS
-    track_secs_old=$(echo ${track_times_array[$i]} | cut -d ':' -f 3)
+    track_secs_old=$(echo "${track_times_array[$i]}" | cut -d ':' -f 3)
     #remove padding zeros to reduce 'base 8 errors'
     #track_secs_new=${track_secs_old##+(0)}
     track_secs_new=${track_secs_old#0}
@@ -811,13 +811,13 @@ elif [[ ! -z "$title_1" ]] && [[ ! -z "$title_2" ]]; then
   #we choose title 2 when there are 2 detected as this better than 50% right most of the time imo.
   mv main_feature_scan.json main_feature_scan.json.original
   auto_found_main_feature=$(echo $title_2)
-  HandBrakeCLI --json -i $source_loc -t $auto_found_main_feature --scan 1> main_feature_scan.json 2> /dev/null
+  HandBrakeCLI --json -i "$source_loc" -t "$auto_found_main_feature" --scan 1> main_feature_scan.json 2> /dev/null
   clean_main_feature_scan
 elif [[ -z "$title_1" ]] && [[ ! -z "$title_2" ]]; then #title 1 doesnt match but title 2 does, use it.
   einfo "online check resulted in title_2, matching handbrakes automatically found main feature $auto_found_main_feature, using title_2"
   mv main_feature_scan.json main_feature_scan.json.original
-  auto_found_main_feature=$(echo $title_2)
-  HandBrakeCLI --json -i $source_loc -t $auto_found_main_feature --scan 1> main_feature_scan.json 2> /dev/null
+  auto_found_main_feature=$(echo "$title_2")
+  HandBrakeCLI --json -i "$source_loc" -t "$auto_found_main_feature" --scan 1> main_feature_scan.json 2> /dev/null
   clean_main_feature_scan
 elif [[ ! -z "$title_1" ]] && [[ -z "$title_2" ]]; then
   #then title 1 is set but if $title_2 is valid $title_2 is set
@@ -1087,10 +1087,10 @@ if [[ -z $rip_only ]]; then
     echo $tot_progress_result
   }
   sleep 1
-  esilent "Encoding started..."
+  einfo "Encoding started..."
   #HandBrakeCLI $options -i $source_loc $source_options -o $output_loc $output_options $video_options $audio_options $picture_options $filter_options $subtitle_options > /dev/null 2>&1 &
   unit_of_measure="percent"
-  HandBrakeCLI $options -i $source_loc $source_options -o "${output_loc}${feature_name}" $output_options $video_options $audio_options $picture_options $filter_options $subtitle_options > "$working_dir"/temp/"$bluray_name"/handbrake.log 2>&1 &
+  HandBrakeCLI "$options" -i "$source_loc" "$source_options" -o "${output_loc}${feature_name}" "$output_options" "$video_options" "$audio_options" "$picture_options" "$filter_options" "$subtitle_options" > "$working_dir"/temp/"$bluray_name"/handbrake.log 2>&1 &
   handbrake_pid=$!
   einfo "handbrake_pid: $handbrake_pid"
   pid_name=$handbrake_pid
@@ -1098,7 +1098,7 @@ if [[ -z $rip_only ]]; then
   sleep 10s # to give time file to be created and data populating
   if [[ -z $bar_override ]]; then
     progress_bar2_init
-    #check for any non zero errors
+    #TODO(littlejeem): Non failure of progress bars always produces a '0' exit code negating point of a check, resolution?
     if [ $? -eq 0 ]; then
       einfo "...handbrake conversion of: $bluray_name complete."
     else
