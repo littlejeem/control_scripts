@@ -758,7 +758,7 @@ if [[ "$omdb_title_result" = *'"Title":"'* ]]; then
     if [[ ${#array_matching_track[@]} -gt 0 ]]; then
       if [[ ${#array_matching_track[@]} -gt 1 ]]; then
         matching_track_text="Matching runtime tracks detected as:"
-        matching_track_list=${array_matching_track[@]}
+        matching_track_list=${array_matching_track[*]}
         edebug "$matching_track_text $matching_track_list"
         for ((i=0, j=1; i<${#array_matching_track[@]}; i++, j++)); do
         	edebug "j is: $j"
@@ -769,7 +769,7 @@ if [[ "$omdb_title_result" = *'"Title":"'* ]]; then
         done
       else
         matching_track_text="Matching runtime track detected as:"
-        matching_track_list=${array_matching_track[@]}
+        matching_track_list=${array_matching_track[*]}
         edebug "$matching_track_text $dts_track_list"
         for ((i=0, j=1; i<${#array_matching_track[@]}; i++, j++)); do
           edebug "j is: $j"
