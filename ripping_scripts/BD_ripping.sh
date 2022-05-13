@@ -63,7 +63,7 @@ lockname=${scriptlong::-3} # reduces the name to remove .sh
 #+---------------------+
 #set default logging level, failure to set this will cause a 'unary operator expected' error
 #remember at level 3 and lower, only esilent messages show, best to include an override in getopts
-verbosity=3
+verbosity=4
 #
 version="1.3" #
 notify_lock="/tmp/$lockname"
@@ -807,7 +807,7 @@ fi
 if [[ -z "$title_1" ]] && [[ -z "$title_2" ]]; then
   einfo "no online data to use, so using local data"
 elif [[ ! -z "$title_1" ]] && [[ ! -z "$title_2" ]]; then
-  enotify "online check resulted in both titles (title_1: $title_1 & title_2: $title_2) matching the runtime of handbrakes automatically found main feature: $auto_found_main_feature. Using title_2"
+  einfo "online check resulted in both titles (title_1: $title_1 & title_2: $title_2) matching the runtime of handbrakes automatically found main feature: $auto_found_main_feature. Using title_2"
   #we choose title 2 when there are 2 detected as this better than 50% right most of the time imo.
   mv main_feature_scan.json main_feature_scan.json.original
   auto_found_main_feature=$(echo $title_2)
@@ -983,6 +983,7 @@ if [[ ${#ac3_array[@]} -gt 0 ]]; then
     einfo "AC3 detected on $ac3_text $ac3_track_list"
   fi
 else
+  #TODO(littlejeem): Only need a warning if ac3_51_array is empty also, perfectly acceptable to have AC3 5.1 as a minimum on a BLURAY
   ewarn "NO AC3 tracks detected, error??"
   ac3_track_list=
 fi
@@ -1087,7 +1088,7 @@ if [[ -z $rip_only ]]; then
     echo $tot_progress_result
   }
   sleep 1
-  einfo "Encoding started..."
+  enotify "Encoding started..."
   #HandBrakeCLI $options -i $source_loc $source_options -o $output_loc $output_options $video_options $audio_options $picture_options $filter_options $subtitle_options > /dev/null 2>&1 &
   unit_of_measure="percent"
   HandBrakeCLI "$options" -i "$source_loc" "$source_options" -o "${output_loc}${feature_name}" "$output_options" "$video_options" "$audio_options" "$picture_options" "$filter_options" "$subtitle_options" > "$working_dir"/temp/"$bluray_name"/handbrake.log 2>&1 &
@@ -1098,7 +1099,7 @@ if [[ -z $rip_only ]]; then
   sleep 10s # to give time file to be created and data populating
   if [[ -z $bar_override ]]; then
     progress_bar2_init
-    #TODO(littlejeem): Non failure of progress bars always produces a '0' exit code negating point of a check, resolution?
+    #check for any non zero errors
     if [ $? -eq 0 ]; then
       einfo "...handbrake conversion of: $bluray_name complete."
     else
@@ -1107,8 +1108,34 @@ if [[ -z $rip_only ]]; then
     fi
   else
     einfo "progress bars overriden"
-    wait $handbrake_pid
-    einfo "...handbrake conversion of: $bluray_name complete."
+    while kill -0 $handbrake_pid >/dev/null 2>&1;
+    do
+    #grep_progress=$(grep '"Progress"' ~/Videos/temp/HARRY_POTTER_7_PART_1/handbrake.log | tail -1)
+    #echo "grep_progress is: $grep_progress"
+      number_progress=$(grep '"Progress"' ~/Videos/temp/HARRY_POTTER_7_PART_1/handbrake.log | tail -1 | cut -d '.' -f 2 | cut -d ',' -f 1)
+      first_digit="${number_progress:0:1}"
+      if [[ $first_digit -eq 0 ]]; then
+        sleep 2m
+      else
+        if (( number_progress > 10000000000000000 )) && (( number_progress < 14999999999999999 )); then
+          enotify "Encoding... 10%"
+        elif (( number_progress > 15000000000000000 )) && (( number_progress < 29999999999999999 )); then
+          enotify "Encoding... 15%"
+        elif (( number_progress > 30000000000000000 )) && (( number_progress < 44999999999999999 )); then
+          enotify "Encoding... 30%"
+        elif (( number_progress > 45000000000000000 )) && (( number_progress < 59999999999999999 )); then
+          enotify "Encoding... 45%"
+        elif (( number_progress > 60000000000000000 )) && (( number_progress < 74999999999999999 )); then
+          enotify "Encoding... 60%"
+        elif (( number_progress > 75000000000000000 )) && (( number_progress < 94999999999999999 )); then
+          enotify "Encoding... 75%"
+        elif (( number_progress > 95000000000000000 )) && (( number_progress < 99000000000000000 )); then
+          enotify "Encoding... 95%"
+        fi
+      fi
+      sleep 40m
+    done
+  enotify "Encoding of $bluray_name complete."
   fi
 fi
 #
