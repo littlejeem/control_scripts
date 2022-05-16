@@ -54,7 +54,7 @@
 # imports the name of this script
 # failure to to set this as lockname will result in check_running failing and 'hung' script
 # manually set this if being run as child from another script otherwise will inherit name of calling/parent script
-scriptlong=`basename "$0"`
+scriptlong=$(basename "$0")
 lockname=${scriptlong::-3} # reduces the name to remove .sh
 #
 #
@@ -153,9 +153,9 @@ convert_secs_hr_min () {
       else
       ((sec=num))
   fi
-  hour=`seq -w 00 $hour | tail -n 1`
-  min=`seq -w 00 $min | tail -n 1`
-  sec=`seq -w 00 $sec | tail -n 1`
+  hour=$(seq -w 00 $hour | tail -n 1)
+  min=$(seq -w 00 $min | tail -n 1)
+  sec=$(seq -w 00 $sec | tail -n 1)
   printf "$hour:$min:$sec"
 }
 #
