@@ -494,7 +494,7 @@ if [[ -z "$encode_only" ]]; then
   }
   #
   einfo "final values passed to makemkvcon are: backup --decrypt --progress=$working_dir/temp/$bluray_name/$bluray_name.log -r $makemkv_drive $makemkv_out_loc"
-  esilent "Ripping started..."
+  enotify "Ripping started..."
   unit_of_measure="cycles"
   makemkvcon backup --decrypt --progress="$working_dir/temp/$bluray_name/$bluray_name.log" -r "$makemkv_drive" "$makemkv_out_loc" > /dev/null 2>&1 &
   makemkv_pid=$!
@@ -503,14 +503,14 @@ if [[ -z "$encode_only" ]]; then
   if [[ -z $bar_override ]]; then
     progress_bar2_init
     if [ $? -eq 0 ]; then
-      einfo "...ripping complete"
+      enotify "...ripping complete"
     else
       eerror "makemkv produced an error, code: $?"
       exit 66
     fi
   else
     einfo "progress bars overridden"
-    while kill -0 $pid_name >/dev/null 2>&1;
+    while kill -0 $makemkv_pid >/dev/null 2>&1;
     do
       max_value=$(get_max_progress)
       edebug "max progress will be: $max_value"
@@ -518,23 +518,23 @@ if [[ -z "$encode_only" ]]; then
       edebug "current progress: $current_value"
       rip_percentage=$(( current_value * 100/max_value ))
       if (( rip_percentage >= 0 )) && (( rip_percentage < 10 )); then
-        einfo "Ripping at: 1%"
+        enotify "Ripping at: 1%"
       elif (( rip_percentage >= 10 )) && (( rip_percentage < 25 )); then
-        einfo "Ripping at: 10%"
+        enotify "Ripping at: 10%"
       elif (( rip_percentage >= 25 )) && (( rip_percentage < 40 )); then
-        einfo "Ripping at: 25%"
+        enotify "Ripping at: 25%"
       elif (( rip_percentage >= 40 )) && (( rip_percentage < 60 )); then
-        einfo "Ripping at: 40%"
+        enotify "Ripping at: 40%"
       elif (( rip_percentage >= 60 )) && (( rip_percentage < 80 )); then
-        einfo "Ripping at: 60%"
+        enotify "Ripping at: 60%"
       elif (( rip_percentage >= 80 )) && (( rip_percentage < 90 )); then
-        einfo "Ripping at: 80%"
+        enotify "Ripping at: 80%"
       elif (( rip_percentage >= 90 )) && (( rip_percentage <= 99 )); then
-        einfo "Ripping at: 90%...nearly done"
+        enotify "Ripping at: 90%...nearly done"
       fi
       sleep 15m
     done
-    einfo "...ripping complete"
+    enotify "...ripping complete"
   fi
 fi
 #
