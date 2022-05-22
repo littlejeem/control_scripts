@@ -60,6 +60,12 @@ cd ~/bin
 ./control_scripts_install.sh
 ```
 
+Insert disk and off you go.
+
+## **Known Bugs**
+#18 - systemd / journal seems to drop lines from its 'status' log, don't know why. More research is needed
+
+
 ## Ripping Scripts
 
 ### DVD_Ripping.sh
