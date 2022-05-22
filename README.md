@@ -63,7 +63,7 @@ cd ~/bin
 Insert disk and off you go.
 
 ## **Known Bugs**
-[#18]https://github.com/littlejeem/control_scripts/issues/18 - systemd / journal seems to drop lines from its 'status' log, don't know why. More research is needed
+https://github.com/littlejeem/control_scripts/issues/18 - systemd / journal seems to drop lines from its 'status' log, don't know why. More research is needed
 
 
 ## Ripping Scripts
