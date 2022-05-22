@@ -60,13 +60,13 @@ cd ~/bin
 ./control_scripts_install.sh
 ```
 
-### Ripping Scripts
+## Ripping Scripts
 
-#### DVD_Ripping.sh
+### DVD_Ripping.sh
 
-#### CD_Ripping.sh
+### CD_Ripping.sh
 
-#### BR_Ripping.sh
+### BR_Ripping.sh
 
 This script has been written to automate the use of the fabulous tools makemkv and HandBrake, it uses makemkv to rip the disc content and HandBrake to encode it, presently this only works for blu-ray films
 
@@ -74,7 +74,7 @@ The aim of the script is to automate ripping & encoding of a bluray. Open drive 
 
 The script has been written so that it can be run automatically using UDEV and a systemd service but it can also be run independently from the command line, either called directly from terminal/ssh or by running ```sudo systemctl start BD_ripping.service```
 
-#### **Usage**
+#### Usage
 
 Usage options are available via '-h' flag
 
@@ -109,11 +109,11 @@ There are three main methods of using this script.
 
 More detail on these options are listed below.
 
-##### 1: Default Automatic Action
+#### 1: Default Automatic Action
 
 Insert the disk, wait until the script finishes, check on progress using below methods, done
 
-##### 2: Systemd
+#### 2: Using systemd
 
 As described above, using the script after first installing with the installation file allows running via systemctl. This allows the script to run in the background and be managed by systemd.
 
@@ -131,7 +131,7 @@ To stop the script:
 sudo systemctl stop BD_ripping.service
 ```
 
-##### 3: Command Line
+#### 3: Command Line
 
 Run the script by using ```./BD_ripping.sh``` in the install directory.
 
@@ -141,11 +141,9 @@ You can add various flags to alter the command line behaviour as
 Logging level is set to 4 (notify), progress bars will be shown,
 
 
-#### **Getting Progress Info**
+#### Getting Progress Info
 
-if running in command line, say using screen, the the script will report progress as defined by the flags chosen
-
-**INSERT FLAGS HERE**
+if running in command line, say using screen, the the script will report progress as defined by the flags chosen.
 
 If allowing the script to run automatically you can check on the script progress, say by logging in via .ssh, and running either.
 
