@@ -1,4 +1,4 @@
-# control_scripts
+# **"control_scripts"**
 
 ## Background
 
@@ -12,11 +12,13 @@ Anyone is welcome to use any part of these scripts while respecting the rights o
 
 If you do use any of these scripts and come up with a problem, idea, improvement or just want to help me learn, just let me know.
 
+NOTE: There are tools out there that do this a bunch better than these scripts or I can come close to, namely "ACE - Encode" Project here: https://joelbassett.github.io/ace-encode/
+
 -------------------------------------------------------------------------------------------------
 
-## TL;DR
+## **TL;DR**
 
-### **Setting Up**
+### Setting Up
 Clone the repository onto your machine, along with the helper_script repository, eg:
 
 ```bash
@@ -27,7 +29,7 @@ cd control_scripts
 git checkout develop
 ```
 
-### **Installation**
+### Installation
 
 install options are available via the ```-h flag```
 
@@ -59,9 +61,13 @@ cd ~/bin
 ./control_scripts_install.sh
 ```
 
-## **BD_ripping.sh**
+### Ripping Scripts
+
+#### BR_Ripping.sh
 
 This script has been written to automate the use of the fabulous tools makemkv and HandBrake, it uses makemkv to rip the disc content and HandBrake to encode it, presently this only works for blu-ray films
+
+The aim of the script is to automate ripping & encoding of a bluray. Open drive -> put disk in -> close drive -> off it goes
 
 The script has been written so that it can be run automatically using UDEV and a systemd service but it can also be run independently from the command line, either called directly from terminal/ssh or by running ```sudo systemctl start BD_ripping.service```
 
@@ -88,7 +94,16 @@ Usage: /home/USER/bin/control_scripts/ripping_scripts/BD_ripping.sh BD_ripping.s
 	-q Manually provide the quality to encode in handbrake, eg. -q 21. default value is 19, anything lower than 17 is considered placebo
 ```
 
-### **systemctl**
+#### **Usage**
+
+There are three main methods of using this script.
+**1:** (preferred) Using the installed defaults of UDEV rule -> calling ripping service -> calling ripping script.
+
+**2:** No UDEV and running the script by starting the ripping service
+
+**3:** Running script directly from command line prompt
+
+##### 1: Systemd
 
 As described above, using the script after first installing with the installation file allows running via systemctl. This allows the script to run in the background and be managed by systemd.
 
@@ -106,7 +121,7 @@ To stop the script:
 sudo systemctl stop BD_ripping.service
 ```
 
-### **Getting Progress Info**
+##### **Getting Progress Info**
 
 if running in command line, say using screen, the the script will report progress as defined by the flags chosen
 
@@ -148,25 +163,25 @@ May 21 12:33:12 example_system example_user[17476]: [full_script.sh] NOTICE -- E
 An example output from the grep method, using defaults would be:
 
 ```
-May 21 09:00:36 system user: [BD_Ripping.sh] full_script started
-May 21 09:00:36 system user: [BD_Ripping.sh] NOTICE -- Ripping started...
-May 21 09:00:51 system user: [BD_Ripping.sh] NOTICE -- Ripping at: 1%
-May 21 09:15:51 system user: [BD_Ripping.sh] NOTICE -- Ripping at: 10%
-May 21 09:30:51 system user: [BD_Ripping.sh] NOTICE -- Ripping at: 25%
-May 21 09:45:51 system user: [BD_Ripping.sh] NOTICE -- Ripping at: 40%
-May 21 10:00:51 system user: [BD_Ripping.sh] NOTICE -- Ripping at: 60%
-May 21 10:15:51 system user: [BD_Ripping.sh] NOTICE -- Ripping at: 90%...nearly done
-May 21 10:30:51 system user: [BD_Ripping.sh] NOTICE -- ...ripping complete
-May 21 10:31:01 system user: [BD_Ripping.sh] WARNING -- NO AC3 tracks detected, error??
-May 21 10:31:02 system user: [BD_Ripping.sh] NOTICE -- Encoding started...
-May 21 11:13:12 system user: [BD_Ripping.sh] NOTICE -- Encoding... 10%
-May 21 11:53:12 system user: [BD_Ripping.sh] NOTICE -- Encoding... 15%
-May 21 12:33:12 system user: [BD_Ripping.sh] NOTICE -- Encoding... 30%
-May 21 14:35:13 system user: [BD_Ripping.sh] NOTICE -- Encoding... 60%
-May 21 15:15:13 system user: [BD_Ripping.sh] NOTICE -- Encoding... 60%
-May 21 15:55:13 system user: [BD_Ripping.sh] NOTICE -- Encoding... 75%
-May 21 16:35:13 system user: [BD_Ripping.sh] NOTICE -- Encoding... 75%
-May 21 17:15:13 system user: [BD_Ripping.sh] NOTICE -- Encoding of BIG_BUCK complete.
-May 21 17:15:14 system user: [BD_Ripping.sh] NOTICE -- successfully removed lockdirectory
-May 21 17:15:14 system user: [BD_Ripping.sh] full_script completed
+May 21 09:00:36 example_system example_user: [BD_Ripping.sh] full_script started
+May 21 09:00:36 example_system example_user: [BD_Ripping.sh] NOTICE -- Ripping started...
+May 21 09:00:51 example_system example_user: [BD_Ripping.sh] NOTICE -- Ripping at: 1%
+May 21 09:15:51 example_system example_user: [BD_Ripping.sh] NOTICE -- Ripping at: 10%
+May 21 09:30:51 example_system example_user: [BD_Ripping.sh] NOTICE -- Ripping at: 25%
+May 21 09:45:51 example_system example_user: [BD_Ripping.sh] NOTICE -- Ripping at: 40%
+May 21 10:00:51 example_system example_user: [BD_Ripping.sh] NOTICE -- Ripping at: 60%
+May 21 10:15:51 example_system example_user: [BD_Ripping.sh] NOTICE -- Ripping at: 90%...nearly done
+May 21 10:30:51 example_system example_user: [BD_Ripping.sh] NOTICE -- ...ripping complete
+May 21 10:31:01 example_system example_user: [BD_Ripping.sh] WARNING -- NO AC3 tracks detected, error??
+May 21 10:31:02 example_system example_user: [BD_Ripping.sh] NOTICE -- Encoding started...
+May 21 11:13:12 example_system example_user: [BD_Ripping.sh] NOTICE -- Encoding... 10%
+May 21 11:53:12 example_system example_user: [BD_Ripping.sh] NOTICE -- Encoding... 15%
+May 21 12:33:12 example_system example_user: [BD_Ripping.sh] NOTICE -- Encoding... 30%
+May 21 14:35:13 example_system example_user: [BD_Ripping.sh] NOTICE -- Encoding... 60%
+May 21 15:15:13 example_system example_user: [BD_Ripping.sh] NOTICE -- Encoding... 60%
+May 21 15:55:13 example_system example_user: [BD_Ripping.sh] NOTICE -- Encoding... 75%
+May 21 16:35:13 example_system example_user: [BD_Ripping.sh] NOTICE -- Encoding... 75%
+May 21 17:15:13 example_system example_user: [BD_Ripping.sh] NOTICE -- Encoding of BIG_BUCK complete.
+May 21 17:15:14 example_system example_user: [BD_Ripping.sh] NOTICE -- successfully removed lockdirectory
+May 21 17:15:14 example_system example_user: [BD_Ripping.sh] full_script completed
 ```
