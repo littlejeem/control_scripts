@@ -65,7 +65,7 @@ lockname=${scriptlong::-3} # reduces the name to remove .sh
 #remember at level 3 and lower, only esilent messages show, best to include an override in getopts
 verbosity=4
 #
-version="1.3" #
+version="1.4" #
 notify_lock="/tmp/$lockname"
 #pushover_title="NAME HERE" #Uncomment if using pushover
 #
@@ -119,8 +119,10 @@ helpFunction () {
    echo -e "\t-p Disable the progress bars in the script visible in terminal, useful when debugging rest of script"
    echo -e "\t-c Temp Override: By default the script removes any temp files on completion. Selecting this flag will keep the files, useful if debugging"
    echo -e "\t-t Manually provide the title to rip eg. -t 42"
-   echo -e "\t-n Manually provide the feature name to lookup eg. -n "BETTER TITLE", useful for those discs that aren't helpfully named"
-      echo -e "\t-q Manually provide the quality to encode in handbrake, eg. -q 21. default value is 19, anything lower than 17 is considered placebo"
+   echo -e "\t-n Provide a niceness value to run intensive (HandBrake) tasks under, useful if machine is used for multiple things"
+   echo -e "\t-o Manually provide the feature name to lookup eg. -n "BETTER TITLE", useful for those discs that aren't helpfully named"
+   echo -e "\t-l Manually override the default location used for encoding source files, defaut is usually the output folder from Rip."
+   echo -e "\t-q Manually provide the quality to encode in handbrake, eg. -q 21. default value is 19, anything lower than 17 is considered placebo"
    #
    if [ -d "/tmp/$lockname" ]; then
      einfo "removing lock directory"
@@ -283,7 +285,7 @@ dirty_exit () {
   fi
   eerror "$lockname experienced an error"
   if [ "$handbrake_exit_code" -gt 0 ]; then
-    error "error found with handbrake"
+    eerror "error found with handbrake, error code: $handbrake_exit_code"
   fi
   exit 66
 }
@@ -293,7 +295,7 @@ dirty_exit () {
 #+---"Get User Options"---+
 #+------------------------+
 esilent "$lockname started"
-while getopts ":SVGHhrespct:n:q:" opt
+while getopts ":SVGHhrespct:n:o:l:q:" opt
 do
     case "${opt}" in
         S) verbosity=$silent_lvl
@@ -314,8 +316,12 @@ do
         einfo "-c temp clean override selected, keeping TEMP files";;
         t) title_override=${OPTARG}
         einfo "-t title_override chosen, using title number: $title_override instead of automatically found main title";;
-        n) name_override=${OPTARG}
-        einfo "-n name override given, using supplied title name of: $name_override";;
+        n) niceness_value=${OPTARG}
+        einfo "-n niceness value set, using supplied niceness value of: $niceness_value";;
+        o) override_name=${OPTARG}
+        einfo "-o override name given, using supplied title name of: $override_name";;
+        l) source_loc=${OPTARG}
+        einfo "-l specified, overriding default source files location, encoding from: ${source_loc}.";;
         q) quality_override=${OPTARG}
         if (( $quality_override >= 17 && $quality_override <= 99 )); then
           quality=$quality_override
@@ -332,6 +338,12 @@ done
 # Check both encode only and rip only are not set
 if [[ ! -z "$encode_only" && ! -z "$rip_only" ]]; then
   eerror "You can't set both rip only & encode only as that is the scripts standard behaviour with no flags set"
+  helpFunction
+  exit 64
+fi
+# Check both rip only and manual source are not set
+if [[ ! -z "$rip_only" && ! -z "$source_loc" ]]; then
+  eerror "You can't set both rip only & override source location"
   helpFunction
   exit 64
 fi
@@ -352,16 +364,18 @@ fi
 einfo "bar_override is: $bar_override"
 #
 # check if media in drive and bail if not
-blockdev --getsize64 $dev_drive > /dev/null
-if [[ $? -gt 0 ]]; then
-  eerror "something wrong with optical media, no media in drive??"
-  if [ -d "/tmp/$lockname" ]; then
-     einfo "removing lock directory"
-     rm -r "/tmp/$lockname"
-   else
-     einfo "problem removing lock directory"
-   fi
-  exit 66
+if [[ -z $source_loc ]]; then
+  blockdev --getsize64 $dev_drive > /dev/null
+  if [[ $? -gt 0 ]]; then
+    eerror "something wrong with optical media, no media in drive??"
+    if [ -d "/tmp/$lockname" ]; then
+       einfo "removing lock directory"
+       rm -r "/tmp/$lockname"
+     else
+       einfo "problem removing lock directory"
+     fi
+    exit 66
+  fi
 fi
 #
 #
@@ -445,34 +459,42 @@ if [[ -z $quality_override ]]; then
 fi
 einfo "quality selected is $quality"
 #
-#Get and use hard coded name of media
-bluray_name=$(blkid -o value -s LABEL "$dev_drive")
-bluray_name=${bluray_name// /_}
-einfo "optical disc bluray name is: $bluray_name"
-#
-#
-#Perhpas build up a list of known FOOBAR'd disc labels such as 'LOGICAL_VOLUME, DISC1 etc?'
-#Get name of media according to syslogs, this will only work if this script is being used automatically via UDEV / SYSTEMD otherwise name likely to me buried in older logs
-#bluray_sys_name=$(grep "UDF-fs: INFO Mounting volume" /var/log/syslog | tail -1 | cut -d ':' -f 5 | cut -d ' ' -f 5)
-bluray_sys_name=$(udfinfo "$dev_drive" 2> /dev/null | grep 'vid' | tail -1 | cut -d '=' -f 2)
-#set what to do if result is found
-#perhaps make it more fancy so if bluray_name doesn't contain bluray_sys_name use bluray_sys_name?
-if [[ ! -z $bluray_sys_name ]]; then
-  einfo "bluray_sys_name found, using: $bluray_sys_name"
-  bluray_name=$bluray_sys_name
+if [[ -z $source_loc ]]; then
+  #Get and use hard coded name of media
+  bluray_name=$(blkid -o value -s LABEL "$dev_drive")
+  bluray_name=${bluray_name// /_}
+  einfo "optical disc bluray name is: $bluray_name"
+  #
+  #
+  #Perhpas build up a list of known FOOBAR'd disc labels such as 'LOGICAL_VOLUME, DISC1 etc?'
+  #Get name of media according to syslogs, this will only work if this script is being used automatically via UDEV / SYSTEMD otherwise name likely to me buried in older logs
+  #bluray_sys_name=$(grep "UDF-fs: INFO Mounting volume" /var/log/syslog | tail -1 | cut -d ':' -f 5 | cut -d ' ' -f 5)
+  bluray_sys_name=$(udfinfo "$dev_drive" 2> /dev/null | grep 'vid' | tail -1 | cut -d '=' -f 2)
+  #set what to do if result is found
+  #perhaps make it more fancy so if bluray_name doesn't contain bluray_sys_name use bluray_sys_name?
+  if [[ ! -z $bluray_sys_name ]]; then
+    einfo "bluray_sys_name found, using: $bluray_sys_name"
+    bluray_name=$bluray_sys_name
+  fi
+else
+  bluray_name=$(echo $source_loc | rev | cut -d '/' -f 1 | rev | tr -d '\\')
 fi
 # create the temp dir, failure to set this will error out handrake parsing info
 mkdir -p "$working_dir/temp/$bluray_name"
 #
 #
-#+-------------------------+
+#+---------------------+
 #+---"Setup Ripping"---+
-#+-------------------------+
+#+---------------------+
 #set output location for makemkv, not in "encode_only as is used in handrake as $source_loc"
 if [[ ! -z "$working_dir" ]] && [[ ! -z "$rip_dest" ]] && [[ ! -z "$category" ]] && [[ ! -z "$bluray_name" ]]; then
   einfo "valid Rips (source) directory, creating"
   makemkv_out_loc="$working_dir/$rip_dest/$category/$bluray_name"
-  mkdir -p "$makemkv_out_loc"
+  if [[ -z "$source_loc" ]]; then
+    mkdir -p "$makemkv_out_loc"
+  else
+    makemkv_out_loc="$source_loc"
+  fi
 else
   eerror "error with necessary variables to create Rips(source files) location"
   exit 65
@@ -503,7 +525,7 @@ if [[ -z "$encode_only" ]]; then
   if [[ -z $bar_override ]]; then
     progress_bar2_init
     if [ $? -eq 0 ]; then
-      enotify "...ripping complete"
+      enotify "...ripping of disc:${bluray_name} complete"
     else
       eerror "makemkv produced an error, code: $?"
       exit 66
@@ -534,7 +556,7 @@ if [[ -z "$encode_only" ]]; then
       fi
       sleep 15m
     done
-    enotify "...ripping complete"
+    enotify "...ripping of disc:${bluray_name} complete"
   fi
 fi
 #
@@ -558,7 +580,7 @@ if [[ -z $rip_only ]]; then
   cd "$working_dir/temp/$bluray_name" || { einfo "Failure changing to working directory temp"; exit 65; }
   #
   #Grab all titles from source
-  einfo "scanning source location for titles..."
+  einfo "scanning source location $source_loc for titles..."
   HandBrakeCLI --json -i "$source_loc" -t 0 --main-feature &> all_titles_scan.json
   handbrake_exit_code=$?
   edebug "HB exit code was: $handbrake_exit_code"
@@ -590,18 +612,18 @@ if [[ -z $rip_only ]]; then
   einfo "creating main_feature_scan.json ..."
   #do X if no title over-ride, else use the title over-ride
   if [[ -z $title_override ]]; then
-    HandBrakeCLI --json -i $source_loc -t $auto_found_main_feature --scan 1> main_feature_scan.json 2> /dev/null
+    HandBrakeCLI --json -i "$source_loc" -t $auto_found_main_feature --scan 1> main_feature_scan.json 2> /dev/null
   else
-    HandBrakeCLI --json -i $source_loc -t $title_override --scan 1> main_feature_scan.json 2> /dev/null
+    HandBrakeCLI --json -i "$source_loc" -t $title_override --scan 1> main_feature_scan.json 2> /dev/null
   fi
   #
   #CLEAN FILE FOR JQ
   clean_main_feature_scan
   #SEARCH FOR FEATURE NAME VIA JQ, unless override in place
-  if [[ -z $name_override ]]; then
+  if [[ -z $override_name ]]; then
     feature_name=$(jq --raw-output '.[].TitleList[].Name' main_feature_scan_trimmed.json | head -n 1 | sed -e "s/ /_/g")
   else
-    feature_name="$name_override"
+    feature_name="$override_name"
   fi
   einfo "feature name is: $feature_name"
   #
@@ -1120,11 +1142,16 @@ if [[ -z $rip_only ]]; then
     echo $tot_progress_result
   }
   sleep 1
-  enotify "Encoding started..."
+  enotify "Encoding of title:${feature_name} started..."
   #HandBrakeCLI $options -i $source_loc $source_options -o $output_loc $output_options $video_options $audio_options $picture_options $filter_options $subtitle_options > /dev/null 2>&1 &
   unit_of_measure="percent"
   #TODO (littlejeem): Work needed on $var, "$var", ${var}, or "${var}" for command. "$var" for $options, $output_options, $video_options, $picture_options. $subtitle_options results in command bailing
-  HandBrakeCLI $options -i "$source_loc" "$source_options" -o "${output_loc}""${feature_name}" $output_options $video_options "$audio_options" $picture_options "$filter_options" $subtitle_options > "$working_dir"/temp/"$bluray_name"/handbrake.log 2>&1 &
+  if [[ -z "$niceness_value" ]]; then
+    HandBrakeCLI $options -i "$source_loc" "$source_options" -o "${output_loc}""${feature_name}" $output_options $video_options $audio_options $picture_options $filter_options $subtitle_options > "$working_dir"/temp/"$bluray_name"/handbrake.log 2>&1 &
+  else
+    edebug "Niceness value detected, using."
+    nice -n "$niceness_value" HandBrakeCLI $options -i "$source_loc" "$source_options" -o "${output_loc}""${feature_name}" $output_options $video_options $audio_options $picture_options $filter_options $subtitle_options > "$working_dir"/temp/"$bluray_name"/handbrake.log 2>&1 &
+  fi
   handbrake_pid=$!
   einfo "handbrake_pid: $handbrake_pid"
   pid_name=$handbrake_pid
@@ -1166,7 +1193,7 @@ if [[ -z $rip_only ]]; then
       fi
       sleep 40m
     done
-  enotify "Encoding of $bluray_name complete."
+  enotify "Encoding of title:${feature_name} complete."
   fi
 fi
 #
