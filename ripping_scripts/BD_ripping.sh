@@ -105,9 +105,9 @@ check_running
 #SVGHhresct:n:q:
 helpFunction () {
   if [[ -z $INVOCATION_ID ]]; then
-    echo ""
+    echo -e "\r"
     echo "Usage: $0"
-    echo "Usage: $0 -G -r -t ## -l \"TITLE HERE\" \"SEARCH TITLE\" -q ## -n ## -s -c"
+    echo "Usage: $0 -G -r -t ## -l \"FILE SOURCE LOCATION\" -q ## -n ## -s -c"
     echo "Usage: $0 -G -e -t 36 -l \"my awesome blu-ray source directory\" -q 18 -n 20 -s -c"
     echo -e "\t Running the script with no flags causes default behaviour with logging level set via 'verbosity' variable"
     echo -e "\t-S Override set verbosity to specify silent log level"
@@ -122,7 +122,7 @@ helpFunction () {
     echo -e "\t-t Manually provide the title to rip eg. -t 42"
     echo -e "\t-n Provide a niceness value to run intensive (HandBrake) tasks under, useful if machine is used for multiple things"
     echo -e "\t-o Manually provide the feature name to lookup online eg. -o \"BETTER TITLE\", useful for those discs that aren't helpfully named."
-    echo -e "\t   eg: disc name is LABEL_1 but you want online data for 13 Assassins, you'd use -n \"13 Assassins\""
+    echo -e "\t   eg: disc name is LABEL_1 but you want online data for 13 Assassins, you'd use -n \"13 Assassins\" as the entry"
     echo -e "\t-l Manually override the default location used for encoding source files, defaut is usually the output folder from Rip."
     echo -e "\t-q Manually provide the quality to encode in handbrake, eg. -q 21. default value is 19, anything lower than 17 is considered placebo"
   else
@@ -202,7 +202,7 @@ temp_clean () {
 }
 
 #TODO(@littlejeem): Look at harmonising exit coniditions using case, as detailed here: https://www.howtogeek.com/766978/how-to-use-case-statements-in-bash-scripts/
-script_exit () {
+local_script_exit () {
   if [ -d /tmp/"$lockname" ]; then
     rm -r /tmp/"$lockname"
     if [[ $? -ne 0 ]]; then
@@ -241,7 +241,7 @@ clean_ctrlc () {
 
     source_clean
     temp_clean
-    script_exit
+    local_script_exit
   fi
 }
 
@@ -261,7 +261,7 @@ clean_exit () {
 
  source_clean
  temp_clean
- script_exit
+ local_script_exit
 }
 
 dirty_exit () {
@@ -344,6 +344,8 @@ do
     esac
 done
 
+#TODO(@littlejeem): Need to find a way to validate data append to flags, eg. -t should be numbers only
+I
 # Check both encode only and rip only are not set
 if [[ ! -z "$encode_only" && ! -z "$rip_only" ]]; then
   eerror "You can't set both rip only & encode only as that is the scripts standard behaviour with no flags set"
@@ -562,19 +564,19 @@ if [[ -z "$encode_only" ]]; then
 #        sleep 2
 #      else
         if (( rip_percentage >= 0 )) && (( rip_percentage < 10 )); then
-          enotify "Ripping at: 1%"
+          enotify "Ripping... 1%"
         elif (( rip_percentage >= 10 )) && (( rip_percentage < 25 )); then
-          enotify "Ripping at: 10%"
+          enotify "Ripping... 10%"
         elif (( rip_percentage >= 25 )) && (( rip_percentage < 40 )); then
-          enotify "Ripping at: 25%"
+          enotify "Ripping... 25%"
         elif (( rip_percentage >= 40 )) && (( rip_percentage < 60 )); then
-          enotify "Ripping at: 40%"
+          enotify "Ripping... 40%"
         elif (( rip_percentage >= 60 )) && (( rip_percentage < 80 )); then
-          enotify "Ripping at: 60%"
+          enotify "Ripping... 60%"
         elif (( rip_percentage >= 80 )) && (( rip_percentage < 90 )); then
-          enotify "Ripping at: 80%"
+          enotify "Ripping... 80%"
         elif (( rip_percentage >= 90 )) && (( rip_percentage <= 99 )); then
-          enotify "Ripping at: 90%...nearly done"
+          enotify "Ripping... 90%"
         fi
       sleep 15m
     done
@@ -583,7 +585,8 @@ if [[ -z "$encode_only" ]]; then
   #give best guestimate of makemkv success
   makemkv_last_status=$(tail -n 1 "$working_dir/temp/$bluray_name/${bluray_name}_messages.log")
   if [[ "$makemkv_last_status" == *"Backup done"* ]]; then
-    enotify "...ripping of disc:${bluray_name} complete"
+    enotify "Ripping... 100%"
+    enotify "Ripping of disc:${bluray_name} complete."
   elif [[ "$makemkv_last_status" == *"Backup failed"* ]]; then
     eerror "Disc failed to rip"
     dirty_exit
@@ -762,12 +765,14 @@ if [[ -z $rip_only ]]; then
     #read in grepped file to array
     mapfile -t track_times_array <grepped_times
     #time conversion work in array
+
+
     for ((i=0; i<${#track_times_array[@]}; i++)); do
       #TRACK DETAILS
       track_num=$((i+1))
       edebug "---------------------------------------"
       edebug "Running time of track $track_num is: ${track_times_array[$i]}"
-      #
+
       #SECONDS
       track_secs_old=$(echo "${track_times_array[$i]}" | cut -d ':' -f 3)
       #remove padding zeros to reduce 'base 8 errors'
@@ -783,7 +788,7 @@ if [[ -z $rip_only ]]; then
       fi
       track_secs_new=$(printf "%02d\n" $track_secs_new)
       edebug "seconds = $track_secs_new"
-      #
+
       #MINS
       track_mins_old=$(echo ${track_times_array[$i]} | cut -d ':' -f 2)
       #remove padding zeros to reduce 'base 8 errors'
@@ -803,14 +808,15 @@ if [[ -z $rip_only ]]; then
       fi
       track_mins_new=$(printf "%02d\n" $track_mins_new)
       edebug "mins = $track_mins_new"
-      #
+
       #HOURS
       track_hours_old=$(echo ${track_times_array[$i]} | cut -d ':' -f 1)
       #remove padding zeros to reduce 'base 8 errors'
       #track_hours_new=${track_hours_old##+(0)}
       track_hours_new=${track_hours_old#0}
-      if [[ ! -z $inc_hours_new ]]; then
-        edebug "track_hours before rounding = $track_hours_new"
+      edebug "track_hours being used are: $track_hours_new"
+      if [[ ! -z $inc_hours ]]; then
+        edebug "track_hours_new before rounding = $track_hours_new"
         track_hours_new=$((track_hours_new+1))
         edebug "track_hours_new after rounding = $track_hours_new"
       fi
@@ -820,20 +826,20 @@ if [[ -z $rip_only ]]; then
       fi
       track_hours_new=$(printf "%02d\n" $track_hours_new)
       edebug "hours = $track_hours_new"
-      #
+
       # COMPARISON WORK
-      local_track_time=$(echo "$track_hours_new:$track_mins_new:$track_secs_new")
+      local_track_time=$(echo "${track_hours_new}:${track_mins_new}:${track_secs_new}")
       edebug "new track time is: $local_track_time"
       edebug "omdb_runtime is: $omdb_runtime_result"
-      if [[ "$local_track_time" = "$omdb_runtime_result" ]]; then
-        edebug ""
+      if [[ "$local_track_time" == "$omdb_runtime_result" ]]; then
+        edebug "\r"
         edebug "*** TRACK MATCHED, using ***"
-        edebug ""
+        edebug "\r"
         array_matching_track+=( "$track_num" )
       else
         edebug "no match"
       fi
-      done
+    done
       edebug "---------------------------------------"
       edebug "array_matching_track contents are: ${array_matching_track[*]}"
       edebug "element 0 = ${array_matching_track[0]}"
@@ -888,7 +894,7 @@ if [[ -z $rip_only ]]; then
 
   #TEST RESULTS TO SEE WHICH TO CHOOSE AND IF DIFFERENT TO OUT AUTO FIND TITLE WE NEED TO RECREATE main_feature_scan.json BEFORE AUDIO CHECK
   if [[ -z "$title_1" ]] && [[ -z "$title_2" ]]; then
-    einfo "no online data to use, so using local data"
+    einfo "no match to online runtime data found, using handbrakes auto found main feature for data"
   elif [[ ! -z "$title_1" ]] && [[ ! -z "$title_2" ]]; then
     einfo "online check resulted in both titles (title_1: $title_1 & title_2: $title_2) matching the runtime of handbrakes automatically found main feature: $auto_found_main_feature. Using title_2"
     #we choose title 2 when there are 2 detected as this better than 50% right most of the time imo.
@@ -1131,7 +1137,7 @@ if [[ -z $rip_only ]]; then
 
   #lets use our fancy name IF found online, else revert to basic
   if [[ ! -z "$working_dir" ]] && [[ ! -z "$encode_dest" ]] && [[ ! -z "$category" ]] && [[ ! -z "$omdb_title_name_result" ]] && [[ ! -z "$omdb_year_result" ]] && [[ ! -z "$container_type" ]]; then
-    einfo "using online found movie title & year for naming"
+    einfo "using online sourced movie title & year for naming"
     output_loc="$working_dir/$encode_dest/$category/$omdb_title_name_result ($omdb_year_result)/"
     feature_name="${omdb_title_name_result} (${omdb_year_result}) - Bluray-1080p_Proper - $audio_codec.${container_type}"
   elif [[ ! -z "$working_dir" ]] && [[ ! -z "$encode_dest" ]] && [[ ! -z "$category" ]] && [[ -z "$omdb_title_result" ]] && [[ ! -z "$feature_name" ]] && [[ ! -z "$container_type" ]]; then
@@ -1233,6 +1239,7 @@ if [[ -z $rip_only ]]; then
   fi
   grep -q ERROR: "$working_dir"/temp/"$bluray_name"/handbrake_error.log
   if [ $? -eq 1 ]; then
+    enotify "Encoding... 100%"
     enotify "Encoding of title:${feature_name} complete."
   else
     ewarn "Encoding of title:${feature_name} finished and HandBrakeCLI shows exit code of 0, but ERROR shown in logs"
@@ -1254,4 +1261,4 @@ source_clean
 #+-------------------+
 #+---"Script Exit"---+
 #+-------------------+
-script_exit
+local_script_exit
