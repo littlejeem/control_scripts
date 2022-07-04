@@ -130,7 +130,7 @@ More detail on these options are listed below.
 
 #### 1: Default Automatic Action
 
-Insert the disk, wait until the script finishes, check on progress using below methods, done
+Insert the disk and wait until the script finishes, done. you can check on progress as detailed in 'Getting Progress Info' section.
 
 #### 2: Using systemd
 
@@ -160,11 +160,11 @@ Run the script by using...
 
 You can add various flags to alter the command line behaviour as
 
-###### default (no flags)
+###### default (no flags) ######
 Logging level is set to 4 (notify), progress bars will be shown,
 
 
-#### Getting Progress Info
+#### Getting Progress Info ####
 
 If running in command line, say using screen, then the script will report progress as defined by the flags chosen.
 
@@ -222,7 +222,7 @@ May 21 14:35:13 example_system example_user: [BD_ripping.sh] NOTICE -- Encoding.
 May 21 15:15:13 example_system example_user: [BD_ripping.sh] NOTICE -- Encoding... 60%
 May 21 15:55:13 example_system example_user: [BD_ripping.sh] NOTICE -- Encoding... 75%
 May 21 16:35:13 example_system example_user: [BD_ripping.sh] NOTICE -- Encoding... 75%
-May 21 17:15:13 example_system example_user: [BD_ripping.sh] NOTICE -- Encoding of BIG_BUCK complete.
+May 21 17:15:13 example_system example_user: [BD_ripping.sh] NOTICE -- Encoding of Big Buck Bunny (2008) complete.
 May 21 17:15:14 example_system example_user: [BD_ripping.sh] NOTICE -- successfully removed lockdirectory
 May 21 17:15:14 example_system example_user: [BD_ripping.sh] full_script completed
 ```
