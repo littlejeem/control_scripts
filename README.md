@@ -152,7 +152,11 @@ sudo systemctl stop BD_ripping.service
 
 #### 3: Command Line
 
-Run the script by using ```./BD_ripping.sh``` in the install directory.
+Run the script by using...
+
+```./BD_ripping.sh```
+
+...in the install directory.
 
 You can add various flags to alter the command line behaviour as
 
