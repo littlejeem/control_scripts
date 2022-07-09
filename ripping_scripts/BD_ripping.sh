@@ -583,7 +583,7 @@ if [[ -z "$encode_only" ]]; then
   fi
 
   #give best guestimate of makemkv success
-  makemkv_last_status=$(tail -n 1 "$working_dir/temp/$bluray_name/${bluray_name}_messages.log")
+  makemkv_last_status=$(tail -n 2 "$working_dir/temp/$bluray_name/${bluray_name}_messages.log" | head -n 1)
   if [[ "$makemkv_last_status" == *"Backup done"* ]]; then
     enotify "Ripping... 100%"
     enotify "Ripping of disc:${bluray_name} complete."
@@ -593,7 +593,7 @@ if [[ -z "$encode_only" ]]; then
     exit 66
   #TODO(@littlejeem): This needs looking at, the elif else, doesn't read well...case statement?
   else
-    makemkv_lastbutone_status=$(tail -n 2 "$working_dir/temp/$bluray_name/${bluray_name}_messages.log")
+    makemkv_lastbutone_status=$(tail -n 3 "$working_dir/temp/$bluray_name/${bluray_name}_messages.log" | head -n 1)
     if [[ "$makemkv_lastbutone_status" == *"Backup done but"* && "$makemkv_lastbutone_status" == *"failed hash check"* ]]; then
       ewarn "makemkv reports backup completed but with errors, any encoding may fail, CHECK RESULTS"
     fi
@@ -1216,6 +1216,7 @@ if [[ -z $rip_only ]]; then
       number_progress=$(grep '"Progress"' "$working_dir/temp/$bluray_name/handbrake.log" | tail -1 | cut -d '.' -f 2 | cut -d ',' -f 1)
       first_digit="${number_progress:0:1}"
       if [[ $first_digit -eq 0 ]]; then
+        enotify "Encoding... 1%"
         sleep 2m
       else
         if (( number_progress > 10000000000000000 )) && (( number_progress < 14999999999999999 )); then
