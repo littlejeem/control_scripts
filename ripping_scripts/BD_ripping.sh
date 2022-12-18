@@ -77,19 +77,22 @@ if [[ -f /usr/local/bin/helper_script.sh ]]; then
   source /usr/local/bin/helper_script.sh
   einfo "helper_script located, using"
 else
-  echo "/usr/local/bin/helper_script.sh, please correct"
+  echo "ERROR /usr/local/bin/helper_script.sh not found, please correct"
+  exit 67
 fi
 if [[ -f /usr/local/bin/config.sh ]]; then
   source /usr/local/bin/config.sh
   einfo "helper_script located, using"
 else
-  echo "/usr/local/bin/config_script.sh, please correct"
+  echo "ERROR /usr/local/bin/config_script.sh not found, please correct"
+  exit 67
 fi
 if [[ -f /usr/local/bin/omdb_key ]]; then
   source /usr/local/bin/omdb_key
   einfo "omdb_key file found, using"
 else
-  echo "/usr/local/bin/omdb_key, please correct"
+  echo "ERROR /usr/local/bin/omdb_key not found, please correct"
+  exit 67
 fi
 
 
@@ -201,7 +204,7 @@ temp_clean () {
   fi
 }
 
-#TODO(@littlejeem): Look at harmonising exit coniditions using case, as detailed here: https://www.howtogeek.com/766978/how-to-use-case-statements-in-bash-scripts/
+#TODO(@littlejeem): Look at harmonising exit conditions using 'case', as detailed here: https://www.howtogeek.com/766978/how-to-use-case-statements-in-bash-scripts/
 local_script_exit () {
   if [ -d /tmp/"$lockname" ]; then
     rm -r /tmp/"$lockname"
@@ -345,7 +348,7 @@ do
 done
 
 #TODO(@littlejeem): Need to find a way to validate data append to flags, eg. -t should be numbers only
-I
+
 # Check both encode only and rip only are not set
 if [[ ! -z "$encode_only" && ! -z "$rip_only" ]]; then
   eerror "You can't set both rip only & encode only as that is the scripts standard behaviour with no flags set"
