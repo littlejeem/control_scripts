@@ -443,7 +443,7 @@ einfo "destination for Encodes is: $encode_dest"
 #+--------------------------------+
 #+---"Any additional variables"---+
 #+--------------------------------+
-banned_list="™ Blu-ray blu-ray Blu-Ray TITLE_1 DISC_1 Blu-ray™"
+banned_list="™ Blu-ray blu-ray Blu-Ray TITLE_1 DISC_1 Blu-ray™ F1"
 banned_name_endings="- @ :"
 
 
@@ -741,20 +741,31 @@ if [[ -z $rip_only ]]; then
     edebug "omdb matching info is: $omdb_title_result"
     omdb_title_name_result=$(echo "$omdb_title_result" | jq --raw-output '.Title')
     einfo "omdb title name is: $omdb_title_name_result"
+    if [[ $verbosity -lt 4 ]]; then
+      echo "omdb title name is: $omdb_title_name_result" >> "$working_dir/temp/$bluray_name/${bluray_name}_omdb_info.log"
+    fi
     omdb_year_result=$(echo "$omdb_title_result" | jq --raw-output '.Year')
     einfo "omdb year is: $omdb_year_result"
+    if [[ $verbosity -lt 4 ]]; then
+      echo "omdb year is: $omdb_year_result" >> "$working_dir/temp/$bluray_name/${bluray_name}_omdb_info.log"
+    fi
     einfo "Getting runtime info..."
     #extract runtime from mass omdb result
     omdb_runtime_result=$(echo "$omdb_title_result" | jq --raw-output '.Runtime')
     #strip out 'min'
     omdb_runtime_result=${omdb_runtime_result%????}
     einfo "omdb runtime is (mins): $omdb_runtime_result ..."
+    if [[ $verbosity -lt 4 ]]; then
+      echo "omdb runtime is (mins): $omdb_runtime_result ..." >> "$working_dir/temp/$bluray_name/${bluray_name}_omdb_info.log"
+    fi
     einfo "...converting to hh:mm:ss"
     omdb_runtime_result=$((omdb_runtime_result*60))
     secs=$omdb_runtime_result
     omdb_runtime_result=$(convert_secs_hr_min)
     einfo "omdb runtime in hh:mm:ss format is: $omdb_runtime_result"
-
+    if [[ $verbosity -lt 4 ]]; then
+      echo "omdb runtime in hh:mm:ss format is: $omdb_runtime_result" >> "$working_dir/temp/$bluray_name/${bluray_name}_omdb_info.log"
+    fi
     #START ARRAY WORK TO ANALYSE TRACK TIMES AND ROUND UP SO AS TO COMPART TO OMDB TIMES
     track_times_array=()
     array_matching_track=()
