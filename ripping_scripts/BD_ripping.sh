@@ -539,6 +539,10 @@ if [[ -z "$encode_only" ]]; then
 
   einfo "final values passed to makemkvcon are: backup --decrypt --messages=$working_dir/temp/$bluray_name/${bluray_name}_messages.log" --progress="$working_dir/temp/$bluray_name/$bluray_name.log" -r "$makemkv_drive" "$makemkv_out_loc"
   enotify "Ripping started..."
+  if [[ $yes_pushover -eq 1 ]]; then
+    message_form="Ripping of $bluray_name started"
+    pushover
+  fi
   unit_of_measure="cycles"
   makemkvcon backup --decrypt --messages="$working_dir/temp/$bluray_name/${bluray_name}_messages.log" --progress="$working_dir/temp/$bluray_name/$bluray_name.log" -r "$makemkv_drive" "$makemkv_out_loc" > /dev/null 2>&1 &
   makemkv_pid=$!
@@ -590,8 +594,16 @@ if [[ -z "$encode_only" ]]; then
   if [[ "$makemkv_last_status" == *"Backup done"* ]]; then
     enotify "Ripping... 100%"
     enotify "Ripping of disc:${bluray_name} complete."
+    if [[ $yes_pushover -eq 1 ]]; then
+      message_form="Ripping of $bluray_name complete"
+      pushover
+    fi
   elif [[ "$makemkv_last_status" == *"Backup failed"* ]]; then
     eerror "Disc failed to rip"
+    if [[ $yes_pushover -eq 1 ]]; then
+      message_form="Ripping of $bluray_name failed"
+      pushover
+    fi
     dirty_exit
     exit 66
   #TODO(@littlejeem): This needs looking at, the elif else, doesn't read well...case statement?
@@ -599,6 +611,10 @@ if [[ -z "$encode_only" ]]; then
     makemkv_lastbutone_status=$(tail -n 3 "$working_dir/temp/$bluray_name/${bluray_name}_messages.log" | head -n 1)
     if [[ "$makemkv_lastbutone_status" == *"Backup done but"* && "$makemkv_lastbutone_status" == *"failed hash check"* ]]; then
       ewarn "makemkv reports backup completed but with errors, any encoding may fail, CHECK RESULTS"
+      if [[ $yes_pushover -eq 1 ]]; then
+        message_form="Ripping of $bluray_name had errors, may fail"
+        pushover
+      fi
     fi
   fi
 fi
@@ -1200,6 +1216,10 @@ if [[ -z $rip_only ]]; then
   }
   sleep 1
   enotify "Encoding of title:${feature_name} started..."
+  if [[ $yes_pushover -eq 1 ]]; then
+    message_form="Encoding of title:${feature_name} started"
+    pushover
+  fi
   #HandBrakeCLI $options -i $source_loc $source_options -o $output_loc $output_options $video_options $audio_options $picture_options $filter_options $subtitle_options > /dev/null 2>&1 &
   unit_of_measure="percent"
   #TODO (littlejeem): Work needed on $var, "$var", ${var}, or "${var}" for command. "$var" for $options, $output_options, $video_options, $picture_options. $subtitle_options results in command bailing
@@ -1256,8 +1276,16 @@ if [[ -z $rip_only ]]; then
   if [ $? -eq 1 ]; then
     enotify "Encoding... 100%"
     enotify "Encoding of title:${feature_name} complete."
+    if [[ $yes_pushover -eq 1 ]]; then
+      message_form="Encoding of title:${feature_name} complete."
+      pushover
+    fi
   else
     ewarn "Encoding of title:${feature_name} finished and HandBrakeCLI shows exit code of 0, but ERROR shown in logs"
+    if [[ $yes_pushover -eq 1 ]]; then
+      message_form="Encoding of title:${feature_name} finished and HandBrakeCLI shows exit code of 0, but ERROR shown in logs."
+      pushover
+    fi
     handbrake_error_log_detection_value=$(grep ERROR: "$working_dir"/temp/"$bluray_name"/handbrake_error.log)
     ewarn "Error detected shows: $handbrake_error_log_detection_value"
   fi

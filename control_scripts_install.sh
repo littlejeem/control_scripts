@@ -67,7 +67,7 @@ udev_loc="/etc/udev/rules.d/"
 sysd_loc="/etc/systemd/system/"
 #set default logging level
 verbosity=3
-version=0.4
+version=0.5
 #
 #
 #+---------------------------------------+
@@ -121,9 +121,12 @@ drive_detect () {
   #for testing with no drive hooked up, eg on VM_Machine uncomment this next line
   #drive_model=ATTRS{model}=="BD-CMB UJ160    "
   edebug "$drive_model"
-  udev_insert='ACTION=="change",KERNEL=="'"$drive_number"'",SUBSYSTEM=="block",'"$drive_model"',ENV{ID_CDROM_MEDIA_'"$env_ammend"'}=="1",ENV{HOME}="/home/'"$install_user"'",RUN+="/bin/systemctl start '"${env_ammend}"'_ripping.service"'
+  #udev_insert='ACTION=="change", ENV{ID_MODEL}=="'"$drive_model"'", ENV{ID_CDROM_MEDIA_'"$env_ammend"'}=="1", ENV{HOME}="/home/'"$install_user"'", RUN+="/bin/systemctl start '"${env_ammend}"'_ripping.service"'
+  udev_insert='ACTION=="change", ENV{ID_SERIAL_SHORT}=='"$drive_model"'", ENV{ID_CDROM_MEDIA_'"$env_ammend"'}=="1", ENV{HOME}="/home/jlivin25", TAG+="systemd", ENV{SYSTEMD_WANTS}="'"${env_ammend}"'_ripping@%E{DEVNAME}.service"'
+  udev_insert='ACTION=="change", ENV{ID_SERIAL_SHORT}=='"$drive_model"'", ENV{ID_CDROM_MEDIA_'"$env_ammend"'D}=="1", ENV{HOME}="/home/jlivin25", TAG+="systemd", RUN+="/bin/systemctl start '"${env_ammend}"'_ripping@%E{DEVNAME}.service"'
   edebug "$udev_insert"
   echo "$udev_insert" > $udev_rule
+  echo "$udev_insert_2" >> $udev_rule
   #modify SOURCE file permissions
   chmod 644 $udev_rule
   if [[ $? -ne 0 ]]; then
@@ -160,7 +163,27 @@ TimeoutStopSec=20
 WantedBy=multi-user.target
 EOF
 }
-#
+
+
+systemd_instantiated_service_create () {
+cat > "/etc/systemd/system/${env_ammend}_ripping@.service" <<EOF
+
+[Unit]
+Description=${env_ammend} Ripping Service
+
+[Service]
+SyslogIdentifier=${env_ammend}_ripping_service
+Type=simple
+User=$install_user
+ExecStart=/home/$install_user/bin/control_scripts/ripping_scripts/${env_ammend}_ripping.sh -D "%I"
+TimeoutStopSec=20
+
+[Install]
+WantedBy=multi-user.target
+EOF
+}
+
+
 #
 abcde_conf_create () {
 cat > "$abcde_loc"/abcde_flac.conf << 'EOF'
@@ -283,6 +306,10 @@ fi
 }
 #
 # make the folder_check var equal to the folder variable to search for, eg: folder_check=$alaclibrary_source
+folder_check=$flaclibrary_source
+check_folder
+
+
 check_folder () {
   if [[ -d "$folder_check" ]]; then
     enotify "$folder_check source already exists, using"
@@ -382,22 +409,25 @@ udev_rule="82-AutoCDInsert.rules"
 env_ammend="CD" #ENV{ID_CDROM_MEDIA_CD}
 drive_detect
 systemd_service_create
+systemd_instantiated_service_create
 #DVD
 udev_rule="83-AutoDVDInsert.rules"
 env_ammend="DVD" #ENV{ID_CDROM_MEDIA_DVD}
 drive_detect
 systemd_service_create
+systemd_instantiated_service_create
 #BLURAY
 udev_rule="84-AutoBDInsert.rules"
 env_ammend="BD" #ENV{ID_CDROM_MEDIA_BD}
 drive_detect
 systemd_service_create
+systemd_instantiated_service_create
 #
 enotify "created UDEV & SYSTEMD files"
 #
 #reload udev rules
 enotify "reloading UDEV rules"
-udevadm control --reload
+udevadm control --reload && udevadm trigger
 if [[ $? -ne 0 ]]; then
   eerror "Reloading UDEV rules failed"
   exit 66
