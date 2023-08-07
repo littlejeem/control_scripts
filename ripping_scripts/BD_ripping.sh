@@ -120,7 +120,8 @@ helpFunction () {
     echo -e "\t-r Rip Only: Will cause the script to only rip the disc, not encode. NOTE: -r & -e cannot both be set"
     echo -e "\t-e Encode Only: Will cause the script to encode to container only, no disc rip. NOTE: -r & -e cannot both be set"
     echo -e "\t-s Source delete override: By default the script removes the source files on completion. Selecting this flag will keep the files"
-    echo -e "\t-p Disable the progress bars in the script visible in terminal, useful when debugging rest of script"
+    echo -e "\t-p By default script will headlessley message via Pushover, use this switch to turn it off"
+    echo -e "\t-b Disable the progress bars in the script visible in terminal, useful when debugging rest of script"
     echo -e "\t-c Temp Override: By default the script removes any temp files on completion. Selecting this flag will keep the files, useful if debugging"
     echo -e "\t-t Manually provide the title to rip eg. -t 42"
     echo -e "\t-n Provide a niceness value to run intensive (HandBrake) tasks under, useful if machine is used for multiple things"
@@ -317,8 +318,8 @@ do
         einfo "-e encode_only selected, only encoding not ripping";;
         s) source_clean_override=1
         einfo "-s source clean override selected, keeping SOURCE files";;
-        p) bar_override=1
-        einfo "-p bar_override selected disabling progress bars";;
+        b) bar_override=1
+        einfo "-b bar_override selected disabling progress bars";;
         c) temp_clean_override=1
         einfo "-c temp clean override selected, keeping TEMP files";;
         t) title_override=${OPTARG}
@@ -327,6 +328,8 @@ do
         einfo "-n niceness value set, using supplied niceness value of: $niceness_value";;
         o) override_name=${OPTARG}
         einfo "-o override name given, using supplied title name of: $override_name";;
+        p) pushover_override=1
+        einfo "-p pushover override given, not sending pushovers";;
         l) source_loc=${OPTARG}
         einfo "-l specified, overriding default source files location, encoding from: ${source_loc}.";;
         d) dev_drive=${OPTARG}
@@ -453,6 +456,7 @@ einfo "destination for Encodes is: $encode_dest"
 #+--------------------------------+
 banned_list="™ Blu-ray blu-ray Blu-Ray TITLE_1 DISC_1 Blu-ray™ F1"
 banned_name_endings="- @ :"
+application_token="ax6iisair7erk5w1oa4i4ia7raukzz"
 
 
 #+----------------------------+
@@ -547,8 +551,10 @@ if [[ -z "$encode_only" ]]; then
 
   einfo "final values passed to makemkvcon are: backup --decrypt --messages=$working_dir/temp/$bluray_name/${bluray_name}_messages.log" --progress="$working_dir/temp/$bluray_name/$bluray_name.log" -r "$makemkv_drive" "$makemkv_out_loc"
   enotify "Ripping started..."
-  message_form=$(echo "Ripping of $bluray_name started")
-  pushover
+  if [[ -z $pushover_override ]]; then
+    message_form="Ripping of $bluray_name started"
+    pushover
+  fi
   unit_of_measure="cycles"
   makemkvcon backup --decrypt --messages="$working_dir/temp/$bluray_name/${bluray_name}_messages.log" --progress="$working_dir/temp/$bluray_name/$bluray_name.log" -r "$makemkv_drive" "$makemkv_out_loc" > /dev/null 2>&1 &
   makemkv_pid=$!
@@ -572,10 +578,10 @@ if [[ -z "$encode_only" ]]; then
       edebug "current progress: $current_value"
       rip_percentage=$(( current_value * 100/max_value ))
       #start by checking that rip_percentage is not a letter
-#      if "$rip_percentage" =~ [A-Za-z]; then
-#        edebug "rip percentage contained a letter, sleeping"
-#        sleep 2
-#      else
+ #      if "$rip_percentage" =~ [A-Za-z]; then
+ #        edebug "rip percentage contained a letter, sleeping"
+ #        sleep 2
+ #      else
         if (( rip_percentage >= 0 )) && (( rip_percentage < 10 )); then
           enotify "Ripping... 1%"
         elif (( rip_percentage >= 10 )) && (( rip_percentage < 25 )); then
@@ -603,8 +609,10 @@ if [[ -z "$encode_only" ]]; then
     message_form=$(echo "Ripping of $bluray_name completed")
   elif [[ "$makemkv_last_status" == *"Backup failed"* ]]; then
     eerror "Disc failed to rip"
-    message_form=$(echo "Ripping of $bluray_name completed")
-    pushover
+    if [[ -z $pushover_override ]]; then
+      message_form="Ripping of $bluray_name failed"
+      pushover
+    fi
     dirty_exit
     exit 66
   #TODO(@littlejeem): This needs looking at, the elif else, doesn't read well...case statement?
@@ -614,9 +622,12 @@ if [[ -z "$encode_only" ]]; then
       ewarn "makemkv reports backup completed but with errors, any encoding may fail, CHECK RESULTS"
       message_form=$(echo "Ripping of $bluray_name completed, but with errors")
     fi
-  pushover
+  fi
+  if [[ -z $pushover_override ]]; then
+    pushover
   fi
 fi
+
 
 #+----------------------+
 #+---"Setup Encoding"---+
@@ -1219,8 +1230,10 @@ if [[ -z $rip_only ]]; then
   unit_of_measure="percent"
   #TODO (littlejeem): Work needed on $var, "$var", ${var}, or "${var}" for command. "$var" for $options, $output_options, $video_options, $picture_options. $subtitle_options results in command bailing
   makemkv reports backup completed but with errors
-  message_form=$(echo "Encoding of $feature_name started")
-  pushover
+  if [[ -z $pushover_override ]]; then
+    message_form=$(echo "Encoding of $feature_name started")
+    pushover
+  fi
   if [[ -z "$niceness_value" ]]; then
     HandBrakeCLI $options -i "$source_loc" "$source_options" -o "${output_loc}""${feature_name}" $output_options $video_options $audio_options $picture_options $filter_options $subtitle_options > "$working_dir"/temp/"$bluray_name"/handbrake.log 2>"$working_dir"/temp/"$bluray_name"/handbrake_error.log &
   else
@@ -1276,12 +1289,13 @@ if [[ -z $rip_only ]]; then
     enotify "Encoding... 100%"
     enotify "Encoding of title:${feature_name} complete."
     message_form=$(echo "Encoding of $feature_name completed, eject disc")
-    pushover
   else
     ewarn "Encoding of title:${feature_name} finished and HandBrakeCLI shows exit code of 0, but ERROR shown in logs"
     handbrake_error_log_detection_value=$(grep ERROR: "$working_dir"/temp/"$bluray_name"/handbrake_error.log)
     ewarn "Error detected shows: $handbrake_error_log_detection_value"
     message_form=$(echo "Encoding of title:${feature_name} finished and HandBrakeCLI shows exit code of 0, but ERROR shown in logs")
+  fi
+  if [[ -z $pushover_override ]]; then
     pushover
   fi
 fi
