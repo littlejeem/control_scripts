@@ -77,19 +77,22 @@ if [[ -f /usr/local/bin/helper_script.sh ]]; then
   source /usr/local/bin/helper_script.sh
   einfo "helper_script located, using"
 else
-  echo "/usr/local/bin/helper_script.sh, please correct"
+  echo "ERROR /usr/local/bin/helper_script.sh not found, please correct"
+  exit 67
 fi
 if [[ -f /usr/local/bin/config.sh ]]; then
   source /usr/local/bin/config.sh
   einfo "helper_script located, using"
 else
-  echo "/usr/local/bin/config_script.sh, please correct"
+  echo "ERROR /usr/local/bin/config_script.sh not found, please correct"
+  exit 67
 fi
 if [[ -f /usr/local/bin/omdb_key ]]; then
   source /usr/local/bin/omdb_key
   einfo "omdb_key file found, using"
 else
-  echo "/usr/local/bin/omdb_key, please correct"
+  echo "ERROR /usr/local/bin/omdb_key not found, please correct"
+  exit 67
 fi
 
 
@@ -139,7 +142,7 @@ helpFunction () {
 
 convert_secs_hr_min () {
   #from here https://stackoverflow.com/questions/12199631/convert-seconds-to-hours-minutes-seconds
-  num=$(echo $secs)
+  num="$secs"
   min=0
   hour=0
   if((num>59));then
@@ -201,11 +204,11 @@ temp_clean () {
   fi
 }
 
-#TODO(@littlejeem): Look at harmonising exit coniditions using case, as detailed here: https://www.howtogeek.com/766978/how-to-use-case-statements-in-bash-scripts/
+#TODO(@littlejeem): Look at harmonising exit conditions using 'case', as detailed here: https://www.howtogeek.com/766978/how-to-use-case-statements-in-bash-scripts/
 local_script_exit () {
   if [ -d /tmp/"$lockname" ]; then
-    rm -r /tmp/"$lockname"
-    if [[ $? -ne 0 ]]; then
+    if ! rm -r /tmp/"$lockname"; then
+#    if [[ $? -ne 0 ]]; then
         eerror "error removing lockdirectory"
         exit 65
     else
@@ -217,7 +220,7 @@ local_script_exit () {
 }
 
 clean_ctrlc () {
-  let ctrlc_count++
+  (( ctrlc_count++ )) || true
   echo
   if [[ $ctrlc_count == 1 ]]; then
     echo "Quit command detected, are you sure?"
@@ -226,13 +229,13 @@ clean_ctrlc () {
   else
     echo "...exiting script."
 
-    if [[ ! -z "$makemkv_pid" ]]; then
+    if [[ -n "$makemkv_pid" ]]; then
       einfo "Terminating rip"
       kill "$makemkv_pid"
       sleep 2
     fi
 
-    if [[ ! -z "$handbrake_pid" ]]; then
+    if [[ -n "$handbrake_pid" ]]; then
       einfo "Terminating encode"
       kill "$handbrake_pid"
       sleep 2
@@ -246,13 +249,13 @@ clean_ctrlc () {
 }
 
 clean_exit () {
- if [[ ! -z "$makemkv_pid" ]]; then
+ if [[ -n "$makemkv_pid" ]]; then
    einfo "Terminating rip"
    kill "$makemkv_pid"
    sleep 2
  fi
 
- if [[ ! -z "$handbrake_pid" ]]; then
+ if [[ -n "$handbrake_pid" ]]; then
    einfo "Terminating encode"
    kill "$handbrake_pid"
    sleep 2
@@ -267,21 +270,20 @@ clean_exit () {
 dirty_exit () {
   source_clean_override=1
   temp_clean_override=1
-  if [[ ! -z "$makemkv_pid" ]]; then
+  if [[ -n "$makemkv_pid" ]]; then
     einfo "Terminating rip"
     kill "$makemkv_pid"
     sleep 2
   fi
 
-  if [[ ! -z "$handbrake_pid" ]]; then
+  if [[ -n "$handbrake_pid" ]]; then
     einfo "Terminating encode"
     kill "$handbrake_pid"
     sleep 2
     [ -d "$output_loc" ] && rm -r "$output_loc" || einfo "no output folder to delete"
   fi
   if [ -d /tmp/"$lockname" ]; then
-    rm -r /tmp/"$lockname"
-    if [[ $? -ne 0 ]]; then
+    if ! rm -r /tmp/"$lockname"; then
         eerror "error removing lockdirectory"
         exit 65
     else
@@ -330,7 +332,7 @@ do
         d) dev_drive=${OPTARG}
         einfo "-d dev_drive detected from systemd is: $dev_drive";;
         q) quality_override=${OPTARG}
-        if (( $quality_override >= 17 && $quality_override <= 99 )); then
+        if (( quality_override >= 17 && quality_override <= 99 )); then
           quality=$quality_override
           einfo "-q quality_override chosen, using supplied Q value of: $quality_override"
         else
@@ -345,31 +347,31 @@ do
 done
 
 #TODO(@littlejeem): Need to find a way to validate data append to flags, eg. -t should be numbers only
-I
+
 # Check both encode only and rip only are not set
-if [[ ! -z "$encode_only" && ! -z "$rip_only" ]]; then
+if [[ -n "$encode_only" && -n "$rip_only" ]]; then
   eerror "You can't set both rip only & encode only as that is the scripts standard behaviour with no flags set"
   helpFunction
   exit 64
 fi
 
 # Check both rip only and manual source are not set together
-if [[ ! -z "$rip_only" && ! -z "$source_loc" ]]; then
+if [[ -n "$rip_only" && -n "$source_loc" ]]; then
   eerror "You can't set both rip only & override source location"
   helpFunction
   exit 64
 fi
 
 # IF encode only is selected and with no source drive specified, require source location
-if [[ ! -z "$encode_only" && -z "$dev_drive" && -z "$source_loc" ]]; then
+if [[ -n "$encode_only" && -z "$dev_drive" && -z "$source_loc" ]]; then
   eerror "-e flag set, but no optical drive source found and no alternative directory specified as source, please use -l to set a local source directory to encode from, or insert disc."
   helpFunction
   exit 64
 fi
 
 # Check if running in a terminal
-tty -s
-if [[ $? = 0 ]]; then
+if ! tty -s; then
+#if [[ $? = 0 ]]; then
   if [[ -z $bar_override ]]; then
     einfo "terminal mode detected, using progress bars" #>> /home/jlivin25/bin/terminal_log_test.log
   else
@@ -388,6 +390,15 @@ einfo "bar_override is: $bar_override"
 trap clean_ctrlc SIGINT
 trap clean_exit SIGTERM
 ctrlc_count=0
+
+
+#+-----------------------------------------+
+#+---"Check necessary variables are set"---+
+#+-----------------------------------------+
+check_fatal_missing_var working_dir
+check_fatal_missing_var category
+check_fatal_missing_var rip_dest
+check_fatal_missing_var encode_dest
 
 
 #+----------------------------------------------+
@@ -440,7 +451,7 @@ einfo "destination for Encodes is: $encode_dest"
 #+--------------------------------+
 #+---"Any additional variables"---+
 #+--------------------------------+
-banned_list="™ Blu-ray blu-ray Blu-Ray TITLE_1 DISC_1 Blu-ray™"
+banned_list="™ Blu-ray blu-ray Blu-Ray TITLE_1 DISC_1 Blu-ray™ F1"
 banned_name_endings="- @ :"
 
 
@@ -484,7 +495,7 @@ if [[ -z $source_loc ]]; then
   bluray_sys_name=$(udfinfo "$dev_drive" 2> /dev/null | grep 'vid' | tail -1 | cut -d '=' -f 2)
   #set what to do if result is found
   #TODO(@littlejeem) Perhaps make it more fancy so if bluray_name doesn't contain bluray_sys_name use bluray_sys_name?
-  if [[ ! -z $bluray_sys_name ]]; then
+  if [[ -n $bluray_sys_name ]]; then
     einfo "bluray_sys_name found, using: $bluray_sys_name"
     bluray_name=$bluray_sys_name
   fi
@@ -499,7 +510,7 @@ mkdir -p "$working_dir/temp/$bluray_name"
 #+---"Setup Ripping"---+
 #+---------------------+
 #set output location for makemkv, not in "encode_only as is used in handrake as $source_loc"
-if [[ ! -z "$working_dir" ]] && [[ ! -z "$rip_dest" ]] && [[ ! -z "$category" ]] && [[ ! -z "$bluray_name" ]]; then
+if [[ -n "$working_dir" ]] && [[ -n "$rip_dest" ]] && [[ -n "$category" ]] && [[ -n "$bluray_name" ]]; then
   einfo "valid Rips (source) directory, creating"
   makemkv_out_loc="$working_dir/$rip_dest/$category/$bluray_name"
   if [[ -z "$source_loc" ]]; then
@@ -536,6 +547,8 @@ if [[ -z "$encode_only" ]]; then
 
   einfo "final values passed to makemkvcon are: backup --decrypt --messages=$working_dir/temp/$bluray_name/${bluray_name}_messages.log" --progress="$working_dir/temp/$bluray_name/$bluray_name.log" -r "$makemkv_drive" "$makemkv_out_loc"
   enotify "Ripping started..."
+  message_form=$(echo "Ripping of $bluray_name started")
+  pushover
   unit_of_measure="cycles"
   makemkvcon backup --decrypt --messages="$working_dir/temp/$bluray_name/${bluray_name}_messages.log" --progress="$working_dir/temp/$bluray_name/$bluray_name.log" -r "$makemkv_drive" "$makemkv_out_loc" > /dev/null 2>&1 &
   makemkv_pid=$!
@@ -587,8 +600,11 @@ if [[ -z "$encode_only" ]]; then
   if [[ "$makemkv_last_status" == *"Backup done"* ]]; then
     enotify "Ripping... 100%"
     enotify "Ripping of disc:${bluray_name} complete."
+    message_form=$(echo "Ripping of $bluray_name completed")
   elif [[ "$makemkv_last_status" == *"Backup failed"* ]]; then
     eerror "Disc failed to rip"
+    message_form=$(echo "Ripping of $bluray_name completed")
+    pushover
     dirty_exit
     exit 66
   #TODO(@littlejeem): This needs looking at, the elif else, doesn't read well...case statement?
@@ -596,7 +612,9 @@ if [[ -z "$encode_only" ]]; then
     makemkv_lastbutone_status=$(tail -n 3 "$working_dir/temp/$bluray_name/${bluray_name}_messages.log" | head -n 1)
     if [[ "$makemkv_lastbutone_status" == *"Backup done but"* && "$makemkv_lastbutone_status" == *"failed hash check"* ]]; then
       ewarn "makemkv reports backup completed but with errors, any encoding may fail, CHECK RESULTS"
+      message_form=$(echo "Ripping of $bluray_name completed, but with errors")
     fi
+  pushover
   fi
 fi
 
@@ -738,20 +756,31 @@ if [[ -z $rip_only ]]; then
     edebug "omdb matching info is: $omdb_title_result"
     omdb_title_name_result=$(echo "$omdb_title_result" | jq --raw-output '.Title')
     einfo "omdb title name is: $omdb_title_name_result"
+    if [[ $verbosity -lt 4 ]]; then
+      echo "omdb title name is: $omdb_title_name_result" >> "$working_dir/temp/$bluray_name/${bluray_name}_omdb_info.log"
+    fi
     omdb_year_result=$(echo "$omdb_title_result" | jq --raw-output '.Year')
     einfo "omdb year is: $omdb_year_result"
+    if [[ $verbosity -lt 4 ]]; then
+      echo "omdb year is: $omdb_year_result" >> "$working_dir/temp/$bluray_name/${bluray_name}_omdb_info.log"
+    fi
     einfo "Getting runtime info..."
     #extract runtime from mass omdb result
     omdb_runtime_result=$(echo "$omdb_title_result" | jq --raw-output '.Runtime')
     #strip out 'min'
     omdb_runtime_result=${omdb_runtime_result%????}
     einfo "omdb runtime is (mins): $omdb_runtime_result ..."
+    if [[ $verbosity -lt 4 ]]; then
+      echo "omdb runtime is (mins): $omdb_runtime_result ..." >> "$working_dir/temp/$bluray_name/${bluray_name}_omdb_info.log"
+    fi
     einfo "...converting to hh:mm:ss"
     omdb_runtime_result=$((omdb_runtime_result*60))
     secs=$omdb_runtime_result
     omdb_runtime_result=$(convert_secs_hr_min)
     einfo "omdb runtime in hh:mm:ss format is: $omdb_runtime_result"
-
+    if [[ $verbosity -lt 4 ]]; then
+      echo "omdb runtime in hh:mm:ss format is: $omdb_runtime_result" >> "$working_dir/temp/$bluray_name/${bluray_name}_omdb_info.log"
+    fi
     #START ARRAY WORK TO ANALYSE TRACK TIMES AND ROUND UP SO AS TO COMPART TO OMDB TIMES
     track_times_array=()
     array_matching_track=()
@@ -794,7 +823,7 @@ if [[ -z $rip_only ]]; then
       #remove padding zeros to reduce 'base 8 errors'
       track_mins_new=${track_mins_old#0}
       edebug "track_mins being used are: $track_mins_new"
-      if [[ ! -z $inc_mins ]]; then
+      if [[ -n $inc_mins ]]; then
         edebug "track_mins_new before rounding = $track_mins_new"
         track_mins_new=$((track_mins_new+1))
         edebug "track_mins after rounding = $track_mins_new"
@@ -815,7 +844,7 @@ if [[ -z $rip_only ]]; then
       #track_hours_new=${track_hours_old##+(0)}
       track_hours_new=${track_hours_old#0}
       edebug "track_hours being used are: $track_hours_new"
-      if [[ ! -z $inc_hours ]]; then
+      if [[ -n $inc_hours ]]; then
         edebug "track_hours_new before rounding = $track_hours_new"
         track_hours_new=$((track_hours_new+1))
         edebug "track_hours_new after rounding = $track_hours_new"
@@ -828,7 +857,7 @@ if [[ -z $rip_only ]]; then
       edebug "hours = $track_hours_new"
 
       # COMPARISON WORK
-      local_track_time=$(echo "${track_hours_new}:${track_mins_new}:${track_secs_new}")
+      local_track_time="${track_hours_new}:${track_mins_new}:${track_secs_new}"
       edebug "new track time is: $local_track_time"
       edebug "omdb_runtime is: $omdb_runtime_result"
       if [[ "$local_track_time" == "$omdb_runtime_result" ]]; then
@@ -895,20 +924,20 @@ if [[ -z $rip_only ]]; then
   #TEST RESULTS TO SEE WHICH TO CHOOSE AND IF DIFFERENT TO OUT AUTO FIND TITLE WE NEED TO RECREATE main_feature_scan.json BEFORE AUDIO CHECK
   if [[ -z "$title_1" ]] && [[ -z "$title_2" ]]; then
     einfo "no match to online runtime data found, using handbrakes auto found main feature for data"
-  elif [[ ! -z "$title_1" ]] && [[ ! -z "$title_2" ]]; then
+  elif [[ -n "$title_1" ]] && [[ -n "$title_2" ]]; then
     einfo "online check resulted in both titles (title_1: $title_1 & title_2: $title_2) matching the runtime of handbrakes automatically found main feature: $auto_found_main_feature. Using title_2"
     #we choose title 2 when there are 2 detected as this better than 50% right most of the time imo.
     mv main_feature_scan.json main_feature_scan.json.original
-    auto_found_main_feature=$(echo $title_2)
+    auto_found_main_feature="$title_2"
     HandBrakeCLI --json -i "$source_loc" -t "$auto_found_main_feature" --scan 1> main_feature_scan.json 2> /dev/null
     clean_main_feature_scan
-  elif [[ -z "$title_1" ]] && [[ ! -z "$title_2" ]]; then #title 1 doesnt match but title 2 does, use it.
+  elif [[ -z "$title_1" ]] && [[ -n "$title_2" ]]; then #title 1 doesnt match but title 2 does, use it.
     einfo "online check resulted in title_2, matching handbrakes automatically found main feature $auto_found_main_feature, using title_2"
     mv main_feature_scan.json main_feature_scan.json.original
-    auto_found_main_feature=$(echo "$title_2")
+    auto_found_main_feature="$title_2"
     HandBrakeCLI --json -i "$source_loc" -t "$auto_found_main_feature" --scan 1> main_feature_scan.json 2> /dev/null
     clean_main_feature_scan
-  elif [[ ! -z "$title_1" ]] && [[ -z "$title_2" ]]; then
+  elif [[ -n "$title_1" ]] && [[ -z "$title_2" ]]; then
     #then title 1 is set but if $title_2 is valid $title_2 is set
     einfo "online check resulted in only title_1: $title_1 matching handbrakes automatically found main feature, so using"
   fi
@@ -1083,27 +1112,27 @@ if [[ -z $rip_only ]]; then
   #+------------------------------+
   #Now we make some decisons about audio choices
   # if its present always prefer, TrueHD; if not, DTS-HD, if not, BD LPCM; if not, DTS; if not, AC3 5.1, and if none of these AC3 2.0 track"
-  if [[ ! -z "$truehd_track_list" ]]; then #true = TrueHD
+  if [[ -n "$truehd_track_list" ]]; then #true = TrueHD
     selected_audio_track=$truehd_track_list
     einfo "Selecting True_HD audio on $truehd_text $truehd_track_list"
     audio_codec="TrueHD"
-  elif [[ ! -z "$truehd_track_list" ]] && [[ ! -z "$dtshd_track_list" ]]; then #true false = TrueHD
+  elif [[ -n "$truehd_track_list" ]] && [[ -n "$dtshd_track_list" ]]; then #true false = TrueHD
     selected_audio_track=$truehd_track_list
     einfo "Selecting True_HD audio on $truehd_text $truehd_track_list"
     audio_codec="TrueHD"
-  elif [[ -z "$truehd_track_list" ]] && [[ ! -z "$dtshd_track_list" ]]; then #false true = DTS-HD
+  elif [[ -z "$truehd_track_list" ]] && [[ -n "$dtshd_track_list" ]]; then #false true = DTS-HD
     selected_audio_track=$dtshd_track_list
     einfo "Selecting DTS-HD audio on $dtshd_text $dtshd_track_list"
     audio_codec="DTS-HD"
-  elif [[ ! -z "$bdlpcm_track_list" ]] && [[ -z "$truehd_track_list" ]] && [[ -z "$dtshd_track_list" ]]; then #true false false = BD LPCM
+  elif [[ -n "$bdlpcm_track_list" ]] && [[ -z "$truehd_track_list" ]] && [[ -z "$dtshd_track_list" ]]; then #true false false = BD LPCM
     selected_audio_track=$bdlpcm_track_list
     einfo "Selecting BD LPCM audio on $bdlpcm_text $bdlpcm_track_list"
     audio_codec="FLAC"
-  elif [[ -z "$truehd_track_list" ]] && [[ -z "$dtshd_track_list" ]] && [[ -z "$bdlpcm_track_list" ]] && [[ ! -z "$dts_track_list" ]]; then #false false false true = DTS
+  elif [[ -z "$truehd_track_list" ]] && [[ -z "$dtshd_track_list" ]] && [[ -z "$bdlpcm_track_list" ]] && [[ -n "$dts_track_list" ]]; then #false false false true = DTS
     selected_audio_track=$dts_track_list
     einfo "Selecting DTS audio on $dts_text $dts_track_list"
     audio_codec="DTS"
-  elif [[ -z "$truehd_track_list" ]] && [[ -z "$dtshd_track_list" ]] && [[ -z "$bdlpcm_track_list" ]] && [[ -z "$dts_track_list" ]] && [[ ! -z "$ac3_51_track_list" ]]; then #false, false, flase, false = AC3 5.1
+  elif [[ -z "$truehd_track_list" ]] && [[ -z "$dtshd_track_list" ]] && [[ -z "$bdlpcm_track_list" ]] && [[ -z "$dts_track_list" ]] && [[ -n "$ac3_51_track_list" ]]; then #false, false, flase, false = AC3 5.1
     selected_audio_track=$ac3_51_track_list
     einfo "Selecting AC3 5.1 audio on $ac3_51_text $ac3_51_track_list"
     audio_codec="AC-3"
@@ -1128,7 +1157,7 @@ if [[ -z $rip_only ]]; then
   #use our found main feature from the work at the top...
   source_options="-t $auto_found_main_feature"
   #...but override it if override is set
-  if [[ ! -z "$title_override" ]]; then
+  if [[ -n "$title_override" ]]; then
     source_options=-"t $title_override"
     einfo "title override selected, using: $title_override"
   fi
@@ -1136,11 +1165,11 @@ if [[ -z $rip_only ]]; then
   einfo "source options are: $source_options"
 
   #lets use our fancy name IF found online, else revert to basic
-  if [[ ! -z "$working_dir" ]] && [[ ! -z "$encode_dest" ]] && [[ ! -z "$category" ]] && [[ ! -z "$omdb_title_name_result" ]] && [[ ! -z "$omdb_year_result" ]] && [[ ! -z "$container_type" ]]; then
+  if [[ -n "$working_dir" ]] && [[ -n "$encode_dest" ]] && [[ -n "$category" ]] && [[ -n "$omdb_title_name_result" ]] && [[ -n "$omdb_year_result" ]] && [[ -n "$container_type" ]]; then
     einfo "using online sourced movie title & year for naming"
     output_loc="$working_dir/$encode_dest/$category/$omdb_title_name_result ($omdb_year_result)/"
     feature_name="${omdb_title_name_result} (${omdb_year_result}) - Bluray-1080p_Proper - $audio_codec.${container_type}"
-  elif [[ ! -z "$working_dir" ]] && [[ ! -z "$encode_dest" ]] && [[ ! -z "$category" ]] && [[ -z "$omdb_title_result" ]] && [[ ! -z "$feature_name" ]] && [[ ! -z "$container_type" ]]; then
+  elif [[ -n "$working_dir" ]] && [[ -n "$encode_dest" ]] && [[ -n "$category" ]] && [[ -z "$omdb_title_result" ]] && [[ -n "$feature_name" ]] && [[ -n "$container_type" ]]; then
     einfo "using local data based naming"
     output_loc="$working_dir/$encode_dest/$category/$feature_name/"
     feature_name="${feature_name} - Bluray-1080p_Proper - $audio_codec.${container_type}"
@@ -1189,6 +1218,9 @@ if [[ -z $rip_only ]]; then
   #HandBrakeCLI $options -i $source_loc $source_options -o $output_loc $output_options $video_options $audio_options $picture_options $filter_options $subtitle_options > /dev/null 2>&1 &
   unit_of_measure="percent"
   #TODO (littlejeem): Work needed on $var, "$var", ${var}, or "${var}" for command. "$var" for $options, $output_options, $video_options, $picture_options. $subtitle_options results in command bailing
+  makemkv reports backup completed but with errors
+  message_form=$(echo "Encoding of $feature_name started")
+  pushover
   if [[ -z "$niceness_value" ]]; then
     HandBrakeCLI $options -i "$source_loc" "$source_options" -o "${output_loc}""${feature_name}" $output_options $video_options $audio_options $picture_options $filter_options $subtitle_options > "$working_dir"/temp/"$bluray_name"/handbrake.log 2>"$working_dir"/temp/"$bluray_name"/handbrake_error.log &
   else
@@ -1203,10 +1235,11 @@ if [[ -z $rip_only ]]; then
   if [[ -z $bar_override ]]; then
     progress_bar2_init
     #check for any non zero errors
-    if [ $? -eq 0 ]; then
+    bar_override_errors=$?
+    if [ $bar_override_errors -eq 0 ]; then
       einfo "...handbrake conversion of: $bluray_name complete."
     else
-      eerror "...handbrake produced an error, code: $?"
+      eerror "...handbrake produced an error, code: $bar_override_errors"
       exit 66
     fi
   else
@@ -1242,10 +1275,14 @@ if [[ -z $rip_only ]]; then
   if [ $? -eq 1 ]; then
     enotify "Encoding... 100%"
     enotify "Encoding of title:${feature_name} complete."
+    message_form=$(echo "Encoding of $feature_name completed, eject disc")
+    pushover
   else
     ewarn "Encoding of title:${feature_name} finished and HandBrakeCLI shows exit code of 0, but ERROR shown in logs"
     handbrake_error_log_detection_value=$(grep ERROR: "$working_dir"/temp/"$bluray_name"/handbrake_error.log)
     ewarn "Error detected shows: $handbrake_error_log_detection_value"
+    message_form=$(echo "Encoding of title:${feature_name} finished and HandBrakeCLI shows exit code of 0, but ERROR shown in logs")
+    pushover
   fi
 fi
 
