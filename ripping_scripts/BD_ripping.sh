@@ -392,6 +392,15 @@ trap clean_exit SIGTERM
 ctrlc_count=0
 
 
+#+-----------------------------------------+
+#+---"Check necessary variables are set"---+
+#+-----------------------------------------+
+check_fatal_missing_var working_dir
+check_fatal_missing_var category
+check_fatal_missing_var rip_dest
+check_fatal_missing_var encode_dest
+
+
 #+----------------------------------------------+
 #+---"Check necessary programs are installed"---+
 #+----------------------------------------------+
@@ -538,6 +547,8 @@ if [[ -z "$encode_only" ]]; then
 
   einfo "final values passed to makemkvcon are: backup --decrypt --messages=$working_dir/temp/$bluray_name/${bluray_name}_messages.log" --progress="$working_dir/temp/$bluray_name/$bluray_name.log" -r "$makemkv_drive" "$makemkv_out_loc"
   enotify "Ripping started..."
+  message_form=$(echo "Ripping of $bluray_name started")
+  pushover
   unit_of_measure="cycles"
   makemkvcon backup --decrypt --messages="$working_dir/temp/$bluray_name/${bluray_name}_messages.log" --progress="$working_dir/temp/$bluray_name/$bluray_name.log" -r "$makemkv_drive" "$makemkv_out_loc" > /dev/null 2>&1 &
   makemkv_pid=$!
@@ -589,8 +600,11 @@ if [[ -z "$encode_only" ]]; then
   if [[ "$makemkv_last_status" == *"Backup done"* ]]; then
     enotify "Ripping... 100%"
     enotify "Ripping of disc:${bluray_name} complete."
+    message_form=$(echo "Ripping of $bluray_name completed")
   elif [[ "$makemkv_last_status" == *"Backup failed"* ]]; then
     eerror "Disc failed to rip"
+    message_form=$(echo "Ripping of $bluray_name completed")
+    pushover
     dirty_exit
     exit 66
   #TODO(@littlejeem): This needs looking at, the elif else, doesn't read well...case statement?
@@ -598,7 +612,9 @@ if [[ -z "$encode_only" ]]; then
     makemkv_lastbutone_status=$(tail -n 3 "$working_dir/temp/$bluray_name/${bluray_name}_messages.log" | head -n 1)
     if [[ "$makemkv_lastbutone_status" == *"Backup done but"* && "$makemkv_lastbutone_status" == *"failed hash check"* ]]; then
       ewarn "makemkv reports backup completed but with errors, any encoding may fail, CHECK RESULTS"
+      message_form=$(echo "Ripping of $bluray_name completed, but with errors")
     fi
+  pushover
   fi
 fi
 
@@ -1202,6 +1218,9 @@ if [[ -z $rip_only ]]; then
   #HandBrakeCLI $options -i $source_loc $source_options -o $output_loc $output_options $video_options $audio_options $picture_options $filter_options $subtitle_options > /dev/null 2>&1 &
   unit_of_measure="percent"
   #TODO (littlejeem): Work needed on $var, "$var", ${var}, or "${var}" for command. "$var" for $options, $output_options, $video_options, $picture_options. $subtitle_options results in command bailing
+  makemkv reports backup completed but with errors
+  message_form=$(echo "Encoding of $feature_name started")
+  pushover
   if [[ -z "$niceness_value" ]]; then
     HandBrakeCLI $options -i "$source_loc" "$source_options" -o "${output_loc}""${feature_name}" $output_options $video_options $audio_options $picture_options $filter_options $subtitle_options > "$working_dir"/temp/"$bluray_name"/handbrake.log 2>"$working_dir"/temp/"$bluray_name"/handbrake_error.log &
   else
@@ -1256,10 +1275,14 @@ if [[ -z $rip_only ]]; then
   if [ $? -eq 1 ]; then
     enotify "Encoding... 100%"
     enotify "Encoding of title:${feature_name} complete."
+    message_form=$(echo "Encoding of $feature_name completed, eject disc")
+    pushover
   else
     ewarn "Encoding of title:${feature_name} finished and HandBrakeCLI shows exit code of 0, but ERROR shown in logs"
     handbrake_error_log_detection_value=$(grep ERROR: "$working_dir"/temp/"$bluray_name"/handbrake_error.log)
     ewarn "Error detected shows: $handbrake_error_log_detection_value"
+    message_form=$(echo "Encoding of title:${feature_name} finished and HandBrakeCLI shows exit code of 0, but ERROR shown in logs")
+    pushover
   fi
 fi
 
