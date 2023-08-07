@@ -124,7 +124,7 @@ source /usr/local/bin/config.sh
 #+---Define Functions---+
 #+----------------------+
 ripcd_flac () {
-  abcde -j `getconf _NPROCESSORS_ONLN` -N -c /home/"$install_user"/.config/abcde/abcde_flac.conf -d /dev/"$drive_install"
+  abcde -j $(getconf _NPROCESSORS_ONLN) -N -c /home/"$install_user"/.config/abcde/abcde_flac.conf -d /dev/"$drive_install"
 }
 #
 #

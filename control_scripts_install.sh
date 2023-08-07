@@ -48,7 +48,7 @@ fi
 # imports the name of this script
 # failure to to set this as lockname will result in check_running failing and 'hung' script
 # manually set this if being run as child from another script otherwise will inherit name of calling/parent script
-scriptlong=`basename "$0"`
+scriptlong=$(basename "$0")
 lockname=${scriptlong::-3} # reduces the name to remove .sh
 #
 #
